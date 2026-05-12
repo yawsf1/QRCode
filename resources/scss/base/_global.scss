@@ -1,0 +1,23 @@
+@use "variables" as *;
+
+body {
+    font-family: $font-base;
+    font-size: $font-size;
+    background: #f8fafc;
+    color: #1e293b;
+    min-height: 100vh;
+}
+
+a {
+    color: $primary;
+    text-decoration: none;
+
+    &:hover {
+        text-decoration: underline;
+    }
+}
+
+.container {
+    width: min(1200px, 90%);
+    margin: 0 auto;
+}
