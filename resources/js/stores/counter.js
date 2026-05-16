@@ -7,6 +7,6 @@ export const useCounterStore = defineStore("counter", () => {
     const increment = () => count.value++;
     const decrement = () => count.value--;
     const reset = () => (count.value = 0);
-
-    return { count, increment, decrement, reset };
+    const million = () => (count.value = 1000000);
+    return { count, increment, decrement, reset, million };
 });

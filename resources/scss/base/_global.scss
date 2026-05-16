@@ -2,10 +2,10 @@
 
 body {
     font-family: $font-base;
-    font-size: $font-size;
-    background: #f8fafc;
-    color: #1e293b;
-    min-height: 100vh;
+    font-weight: $font-weight;
+    background: $primary;
+    color: $secondary;
+    min-height: calc(100vh - 50px);
 }
 
 a {
@@ -19,5 +19,4 @@ a {
 
 .container {
     width: min(1200px, 90%);
-    margin: 0 auto;
 }

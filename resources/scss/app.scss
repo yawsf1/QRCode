@@ -6,3 +6,14 @@
 // @use './components/button';
 // @use './components/card';
 // @use './pages/home';
+body {
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+
+    justify-content: center;
+}
+#app {
+    width: 100%;
+}
