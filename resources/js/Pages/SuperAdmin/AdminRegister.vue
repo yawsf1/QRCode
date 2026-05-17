@@ -5,13 +5,14 @@ import { route } from "ziggy-js";
 import MainButton from "../../components/Buttons/MainButton.vue";
 import SmallMainLink from "../../components/Links/SmallMainLink.vue";
 import SmallSecondaryLink from "../../components/Links/SmallSecondaryLink.vue";
+
 const form = useForm({
     nom: "",
     prenom: "",
     email: "",
     password: "",
     telephone: "",
-    departement: "",
+    departement: "", // Unified casing
 });
 
 const errors = computed(() => usePage().props.errors);
@@ -34,8 +35,11 @@ function register() {
                     text="← Retour"
                 />
             </div>
+
             <h2 class="title">Ajouter un admin</h2>
-            <p class="subtitle">Créer un nouveau compte administrateur</p>
+            <p class="subtitle">
+                Créer un nouveau compte administrateur d'entreprise
+            </p>
 
             <form class="form" @submit.prevent="register">
                 <div class="grid">
@@ -66,7 +70,7 @@ function register() {
                         <input
                             type="email"
                             v-model="form.email"
-                            placeholder="Email"
+                            placeholder="adresse@exemple.com"
                         />
                         <p v-if="errors.email" class="error">
                             {{ errors.email }}
@@ -80,12 +84,13 @@ function register() {
                         <input
                             type="password"
                             v-model="form.password"
-                            placeholder="Mot de passe"
+                            placeholder="••••••••"
                         />
                         <p v-if="errors.password" class="error">
                             {{ errors.password }}
                         </p>
                     </div>
+
                     <div class="field full">
                         <label
                             >Nom d'entreprise
@@ -93,19 +98,20 @@ function register() {
                         >
                         <input
                             type="text"
-                            v-model="form.Departement"
-                            placeholder="Nom d'entreprise"
+                            v-model="form.departement"
+                            placeholder="Structure ou Entreprise SAS"
                         />
                         <p v-if="errors.departement" class="error">
                             {{ errors.departement }}
                         </p>
                     </div>
+
                     <div class="field full">
                         <label>Téléphone</label>
                         <input
                             type="text"
                             v-model="form.telephone"
-                            placeholder="Téléphone"
+                            placeholder="N° de ligne directe"
                         />
                         <p v-if="errors.telephone" class="error">
                             {{ errors.telephone }}
@@ -113,142 +119,179 @@ function register() {
                     </div>
                 </div>
 
-                <MainButton
-                    type="submit"
-                    :disabled="form.processing"
-                    :text="form.processing ? 'Ajout en cours...' : 'Ajouter'"
-                />
+                <div class="formActions">
+                    <MainButton
+                        type="submit"
+                        :disabled="form.processing"
+                        :text="
+                            form.processing
+                                ? 'Ajout en cours...'
+                                : 'Ajouter l\'administrateur'
+                        "
+                    />
+                </div>
             </form>
         </div>
     </div>
 </template>
 
 <style scoped lang="scss">
+@import url("https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap");
+
 .pageContainer {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #16161f;
+    --border: rgba(255, 255, 255, 0.06);
+    --border-strong: rgba(255, 255, 255, 0.12);
+    --text-primary: #f0f0f8;
+    --text-secondary: #8888aa;
+    --text-muted: #55556a;
+    --accent: #4f7cff;
+    --accent-hover: #3b66eb;
+    --error: #ff6b6b;
+
+    font-family: "Sora", sans-serif;
     width: 100%;
-    min-height: calc(100vh - 50px);
-    flex-direction: column;
+    min-height: calc(100vh - 60px);
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 20px;
-    background: #ffffff;
+    padding: 40px 20px;
+    background: var(--bg);
     position: relative;
+    box-sizing: border-box;
 }
+
 .topSection {
-    width: 100%;
-    max-width: 520px;
+    margin-bottom: 24px;
     display: flex;
-    justify-content: flex-end;
-    margin-bottom: 10px;
-    position: absolute;
-    top: 20px;
-    right: 20px;
+    justify-content: flex-start;
 }
+
 .card {
     width: 100%;
-    max-width: 520px;
-    background: #ffffff;
-    border-radius: 18px;
-    padding: 20px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-    position: relative;
+    max-width: 540px;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: 16px;
+    padding: 32px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
 }
 
 .title {
     font-size: 22px;
     font-weight: 700;
-    color: #0f172a;
-    margin-bottom: 5px;
+    color: var(--text-primary);
+    margin: 0 0 6px 0;
+    letter-spacing: -0.5px;
 }
 
 .subtitle {
-    font-size: 14px;
-    color: #64748b;
-    margin-bottom: 10px;
+    font-size: 13.5px;
+    color: var(--text-secondary);
+    margin: 0 0 28px 0;
+    line-height: 1.5;
 }
 
 /* FORM */
 .form {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 20px;
 }
 
 .grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 14px;
+    gap: 16px;
 }
 
 /* FIELD */
 .field {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 8px;
 }
 
 .field.full {
     grid-column: span 2;
 }
 
-/* INPUTS */
-input {
-    width: 100%;
-    padding: 12px 14px;
-    border-radius: 12px;
-    border: 1px solid #e2e8f0;
-    outline: none;
-    font-size: 14px;
-    transition: 0.2s ease;
-    background: #fff;
-}
-
-input:focus {
-    border-color: #2563eb;
-}
-
-.error {
-    font-size: 12px;
-    color: #dc2626;
-}
-
-/* BUTTON */
-button {
-    margin-top: 8px;
-    width: 100%;
-    padding: 12px 14px;
-    border-radius: 12px;
-    border: none;
-    background: #2563eb;
-    color: white;
-    font-weight: 600;
-    cursor: pointer;
-    transition: 0.2s ease;
-}
-
-button:hover {
-    background: #1d4ed8;
-}
-
-button:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
 label {
-    font-size: 13px;
+    font-size: 12.5px;
     font-weight: 600;
-    color: #0f172a;
+    color: var(--text-primary);
     display: flex;
     align-items: center;
     gap: 4px;
 }
 
 .required {
-    color: #dc2626;
+    color: var(--error);
     font-weight: 700;
 }
-/* MOBILE */
+
+/* INPUTS */
+input {
+    width: 100%;
+    padding: 12px 16px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text-primary);
+    outline: none;
+    font-size: 14px;
+    font-family: "Sora", sans-serif;
+    transition: all 0.15s ease;
+    box-sizing: border-box;
+
+    &::placeholder {
+        color: var(--text-muted);
+        opacity: 0.8;
+    }
+
+    &:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 1px var(--accent);
+    }
+}
+
+.error {
+    font-size: 12px;
+    color: var(--error);
+    margin: 4px 0 0 0;
+    font-weight: 500;
+}
+
+.formActions {
+    margin-top: 12px;
+
+    :deep(button) {
+        width: 100%;
+        padding: 14px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 14px;
+        font-family: "Sora", sans-serif;
+        background: var(--accent);
+        color: white;
+        border: none;
+        cursor: pointer;
+        transition: background 0.15s ease;
+
+        &:hover {
+            background: var(--accent-hover);
+        }
+
+        &:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    }
+}
+
+/* MOBILE RESPONSIVE CLOSURES */
 @media (max-width: 768px) {
     .grid {
         grid-template-columns: 1fr;
@@ -259,7 +302,7 @@ label {
     }
 
     .card {
-        padding: 18px;
+        padding: 24px 20px;
     }
 }
 </style>

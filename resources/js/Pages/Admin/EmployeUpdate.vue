@@ -38,8 +38,6 @@ const errors = computed(() => usePage().props.errors);
 function update() {
     form.put(route("admin.employe.update", props.employe.id));
 }
-
-console.log(props.employe);
 </script>
 
 <template>
@@ -47,12 +45,16 @@ console.log(props.employe);
         <div class="card">
             <div class="topSection">
                 <SmallSecondaryLink
-                    :link="route('admin.dashboard')"
-                    text="← Retour"
+                    :link="route('employe.list')"
+                    text="← Retour au registre"
                 />
             </div>
-            <h2 class="title">Modifier d'employé : {{ employe.prenom }}</h2>
-            <p class="subtitle">Créer un nouveau compte d'employé</p>
+
+            <h2 class="title">Modifier l'employé : {{ employe.prenom }}</h2>
+            <p class="subtitle">
+                Mettre à jour les informations de profil et de régulation
+                horaire
+            </p>
 
             <form class="form" @submit.prevent="update">
                 <div class="grid">
@@ -109,7 +111,7 @@ console.log(props.employe);
                         <input
                             type="text"
                             v-model="form.telephone"
-                            :placeholder="employe.telephone"
+                            :placeholder="employe.telephone || 'Non renseigné'"
                         />
                         <p v-if="errors.telephone" class="error">
                             {{ errors.telephone }}
@@ -117,27 +119,35 @@ console.log(props.employe);
                     </div>
 
                     <div class="field">
-                        <label
-                            >Heure de fin ({{
-                                employe.horaire?.heure_fin || "—"
-                            }})<span class="required">*</span></label
-                        >
-                        <input type="time" v-model="form.heure_fin" />
-                        <p v-if="errors.heure_fin" class="error">
-                            {{ errors.heure_fin }}
-                        </p>
-                    </div>
-                    <div class="field">
-                        <label
-                            >Heure de début ({{
-                                employe.horaire?.heure_debut || "—"
-                            }}) <span class="required">*</span></label
-                        >
+                        <label>
+                            Heure de début
+                            <span class="context-label"
+                                >({{
+                                    employe.horaire?.heure_debut || "—"
+                                }})</span
+                            >
+                            <span class="required">*</span>
+                        </label>
                         <input type="time" v-model="form.heure_debut" />
                         <p v-if="errors.heure_debut" class="error">
                             {{ errors.heure_debut }}
                         </p>
                     </div>
+
+                    <div class="field">
+                        <label>
+                            Heure de fin
+                            <span class="context-label"
+                                >({{ employe.horaire?.heure_fin || "—" }})</span
+                            >
+                            <span class="required">*</span>
+                        </label>
+                        <input type="time" v-model="form.heure_fin" />
+                        <p v-if="errors.heure_fin" class="error">
+                            {{ errors.heure_fin }}
+                        </p>
+                    </div>
+
                     <div class="field full">
                         <label>Tolérance de retard (minutes)</label>
                         <input
@@ -184,111 +194,165 @@ console.log(props.employe);
                     </div>
                 </div>
 
-                <MainButton
-                    type="submit"
-                    :disabled="form.processing"
-                    :text="
-                        form.processing
-                            ? 'Modification en cours...'
-                            : 'Modifier'
-                    "
-                />
+                <div class="formActions">
+                    <MainButton
+                        type="submit"
+                        :disabled="form.processing"
+                        :text="
+                            form.processing
+                                ? 'Modification en cours...'
+                                : 'Enregistrer les modifications'
+                        "
+                    />
+                </div>
             </form>
         </div>
     </div>
 </template>
 
 <style scoped lang="scss">
+@import url("https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap");
+
 .pageContainer {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #16161f;
+    --border: rgba(255, 255, 255, 0.06);
+    --border-strong: rgba(255, 255, 255, 0.12);
+    --text-primary: #f0f0f8;
+    --text-secondary: #8888aa;
+    --text-muted: #55556a;
+    --accent: #4f7cff;
+    --accent-hover: #3b66eb;
+    --error: #ff6b6b;
+    --success: #10b981;
+
+    font-family: "Sora", sans-serif;
     width: 100%;
-    min-height: calc(100vh - 50px);
-    flex-direction: column;
+    min-height: calc(100vh - 60px);
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 20px;
-    background: #ffffff;
+    padding: 40px 20px;
+    background: var(--bg);
     position: relative;
+    box-sizing: border-box;
 }
+
 .topSection {
-    width: 100%;
-    max-width: 520px;
+    margin-bottom: 24px;
     display: flex;
-    justify-content: flex-end;
-    margin-bottom: 10px;
-    position: absolute;
-    top: 20px;
-    right: 20px;
+    justify-content: flex-start;
 }
+
 .card {
     width: 100%;
-    max-width: 520px;
-    background: #ffffff;
-    border-radius: 18px;
-    padding: 20px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-    position: relative;
+    max-width: 560px;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: 16px;
+    padding: 32px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
 }
 
 .title {
     font-size: 22px;
     font-weight: 700;
-    color: #0f172a;
-    margin-bottom: 5px;
+    color: var(--text-primary);
+    margin: 0 0 6px 0;
+    letter-spacing: -0.5px;
 }
 
 .subtitle {
-    font-size: 14px;
-    color: #64748b;
-    margin-bottom: 10px;
+    font-size: 13.5px;
+    color: var(--text-secondary);
+    margin: 0 0 28px 0;
+    line-height: 1.5;
 }
 
 /* FORM */
 .form {
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 20px;
 }
 
 .grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 14px;
+    gap: 16px;
 }
 
 /* FIELD */
 .field {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 8px;
 }
 
 .field.full {
     grid-column: span 2;
 }
 
+label {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.context-label {
+    font-size: 11.5px;
+    color: var(--text-secondary);
+    font-weight: 400;
+}
+
+.required {
+    color: var(--error);
+    font-weight: 700;
+}
+
 /* INPUTS */
 input {
     width: 100%;
-    padding: 12px 14px;
-    border-radius: 12px;
-    border: 1px solid #e2e8f0;
+    padding: 12px 16px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    color: var(--text-primary);
     outline: none;
     font-size: 14px;
-    transition: 0.2s ease;
-    background: #fff;
-}
+    font-family: "Sora", sans-serif;
+    transition: all 0.15s ease;
+    box-sizing: border-box;
 
-input:focus {
-    border-color: #2563eb;
+    &::placeholder {
+        color: var(--text-muted);
+        opacity: 0.8;
+    }
+
+    &:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 1px var(--accent);
+    }
+
+    /* Dark variant setup for time elements */
+    &[type="time"]::-webkit-calendar-picker-indicator {
+        filter: invert(0.9);
+        cursor: pointer;
+    }
 }
 
 .error {
     font-size: 12px;
-    color: #dc2626;
+    color: var(--error);
+    margin: 4px 0 0 0;
+    font-weight: 500;
 }
 
-/* CUSTOM CHECKBOX PILLETS */
+/* CUSTOM CHECKBOX PILLS */
 .checkboxGroup {
     display: flex;
     flex-wrap: wrap;
@@ -300,24 +364,27 @@ input:focus {
     display: inline-flex;
     align-items: center;
     padding: 8px 14px;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
+    background: var(--surface2);
+    border: 1px solid var(--border);
     border-radius: 20px;
-    font-size: 13px;
+    font-size: 12.5px;
     font-weight: 500;
+    color: var(--text-secondary);
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.15s ease;
     user-select: none;
 
     &:hover {
-        background: #f1f5f9;
-        border-color: #cbd5e1;
+        background: rgba(255, 255, 255, 0.05);
+        border-color: var(--text-muted);
+        color: var(--text-primary);
     }
 
     &.is-checked {
-        background: #e0f2fe;
-        border-color: #0284c7;
-        color: #0369a1;
+        background: rgba(79, 124, 255, 0.15);
+        border-color: var(--accent);
+        color: var(--text-primary);
+        font-weight: 600;
     }
 }
 
@@ -325,44 +392,34 @@ input:focus {
     display: none;
 }
 
-/* BUTTON */
-button {
-    margin-top: 8px;
-    width: 100%;
-    padding: 12px 14px;
-    border-radius: 12px;
-    border: none;
-    background: #2563eb;
-    color: white;
-    font-weight: 600;
-    cursor: pointer;
-    transition: 0.2s ease;
+.formActions {
+    margin-top: 12px;
+
+    :deep(button) {
+        width: 100%;
+        padding: 14px;
+        border-radius: 10px;
+        font-weight: 600;
+        font-size: 14px;
+        font-family: "Sora", sans-serif;
+        background: var(--accent);
+        color: white;
+        border: none;
+        cursor: pointer;
+        transition: background 0.15s ease;
+
+        &:hover {
+            background: var(--accent-hover);
+        }
+
+        &:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    }
 }
 
-button:hover {
-    background: #1d4ed8;
-}
-
-button:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-
-label {
-    font-size: 13px;
-    font-weight: 600;
-    color: #0f172a;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.required {
-    color: #dc2626;
-    font-weight: 700;
-}
-
-/* MOBILE */
+/* MOBILE RESPONSIVE CLOSURES */
 @media (max-width: 768px) {
     .grid {
         grid-template-columns: 1fr;
@@ -373,7 +430,7 @@ label {
     }
 
     .card {
-        padding: 18px;
+        padding: 24px 20px;
     }
 }
 </style>

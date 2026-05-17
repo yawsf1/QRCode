@@ -12,6 +12,6 @@
     justify-content: center;
     align-items: center;
     width: 100%;
-    margin-top: 50px;
+    min-height: 100vh; // ← was margin-top: 50px
 }
 </style>

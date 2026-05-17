@@ -89,11 +89,11 @@ function showEmploye(id) {
                     action est irréversible.
                 </p>
                 <div class="modalActions">
-                    <button class="btnConfirm" @click="deleteEmploye">
-                        Oui, supprimer
-                    </button>
                     <button class="btnCancel" @click="showDeleteModal = false">
                         Annuler
+                    </button>
+                    <button class="btnConfirm" @click="deleteEmploye">
+                        Oui, supprimer
                     </button>
                 </div>
             </div>
@@ -115,23 +115,28 @@ function showEmploye(id) {
                 </div>
 
                 <div class="filtering">
-                    <SecondaryButton text="Par Nom" @click="sortBy = 'name'" />
-
                     <SecondaryButton
+                        :class="{ 'is-active': sortBy === 'name' }"
+                        text="Par Nom"
+                        @click="sortBy = 'name'"
+                    />
+                    <SecondaryButton
+                        :class="{ 'is-active': sortBy === 'recent' }"
                         text="Plus récent"
                         @click="sortBy = 'recent'"
                     />
                 </div>
 
-                <MainLink
-                    :link="route('employe.register.form')"
-                    text="Ajouter un employé"
-                />
-
-                <MainLink
-                    :link="route('admin.dashboard')"
-                    text="← Retour au dashboard"
-                />
+                <div class="navigationGroup">
+                    <MainLink
+                        :link="route('employe.register.form')"
+                        text="Ajouter un employé"
+                    />
+                    <MainLink
+                        :link="route('admin.dashboard')"
+                        text="← Retour au dashboard"
+                    />
+                </div>
             </div>
         </div>
 
@@ -154,21 +159,21 @@ function showEmploye(id) {
                         :key="employe.id"
                         class="adminRow"
                     >
-                        <td data-label="Nom Complet">
+                        <td data-label="Nom Complet" class="primaryText">
                             {{ employe.nom }} {{ employe.prenom }}
                         </td>
-                        <td data-label="Email">{{ employe.email }}</td>
-                        <td data-label="Téléphone">
+                        <td data-label="Email" class="secondaryText">
+                            {{ employe.email }}
+                        </td>
+                        <td data-label="Téléphone" class="secondaryText">
                             {{ employe.telephone || "—" }}
                         </td>
-
-                        <td data-label="Date création">
+                        <td data-label="Date création" class="secondaryText">
                             {{ formatDate(employe.created_at) }}
                         </td>
-
                         <td data-label="Statut">
                             <span
-                                class="status"
+                                class="statusBadge"
                                 :class="
                                     employe.est_actif ? 'active' : 'inactive'
                                 "
@@ -176,7 +181,6 @@ function showEmploye(id) {
                                 {{ employe.est_actif ? "Actif" : "Inactif" }}
                             </span>
                         </td>
-
                         <td data-label="Actions" class="text-right actionsCell">
                             <button
                                 class="tableViewBtn"
@@ -211,7 +215,7 @@ function showEmploye(id) {
                     </tr>
 
                     <tr v-if="employes.data.length === 0">
-                        <td colspan="10" class="emptyState">
+                        <td colspan="6" class="emptyState">
                             Aucun employé trouvé
                         </td>
                     </tr>
@@ -219,7 +223,10 @@ function showEmploye(id) {
             </table>
         </div>
 
-        <div class="pagination" v-if="employes.data.length > 0">
+        <div
+            class="pagination"
+            v-if="employes.links && employes.links.length > 0"
+        >
             <button
                 v-for="link in employes.links"
                 :key="link.label"
@@ -233,25 +240,43 @@ function showEmploye(id) {
 </template>
 
 <style scoped lang="scss">
+@import url("https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap");
+
 .containerOfList {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #16161f;
+    --border: rgba(255, 255, 255, 0.06);
+    --border-strong: rgba(255, 255, 255, 0.12);
+    --text-primary: #f0f0f8;
+    --text-secondary: #8888aa;
+    --text-muted: #55556a;
+    --accent: #4f7cff;
+    --accent-hover: #3b66eb;
+    --error: #ff6b6b;
+    --error-dim: rgba(255, 107, 107, 0.1);
+    --success: #10b981;
+    --success-dim: rgba(16, 185, 129, 0.12);
+
+    font-family: "Sora", sans-serif;
     width: 100%;
-    min-height: calc(100vh - 50px);
-    padding: 40px;
-    background: #fafafa;
-    color: #111111;
+    flex-grow: 1;
+    padding: 30px 40px;
+    background: var(--bg);
+    color: var(--text-primary);
     display: flex;
     flex-direction: column;
-    gap: 32px;
 }
 
+/* Modal Windows */
 .modalOverlay {
     position: fixed;
     top: 0;
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: rgba(0, 0, 0, 0.2);
-    backdrop-filter: blur(2px);
+    background: rgba(5, 5, 8, 0.75);
+    backdrop-filter: blur(4px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -259,20 +284,20 @@ function showEmploye(id) {
 }
 
 .modalBox {
-    background: #ffffff;
-    padding: 40px;
-    border-radius: 12px;
+    background: var(--surface);
+    padding: 36px;
+    border-radius: 16px;
     max-width: 440px;
     width: 90%;
     text-align: left;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-    border: 1px solid #111111;
+    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.5);
+    border: 1px solid var(--border-strong);
     display: flex;
     flex-direction: column;
 
     .modalIcon {
         font-size: 32px;
-        color: #ef4444;
+        color: var(--error);
         margin-bottom: 16px;
         align-self: flex-start;
     }
@@ -280,13 +305,13 @@ function showEmploye(id) {
     h3 {
         font-size: 18px;
         font-weight: 700;
-        color: #111111;
+        color: var(--text-primary);
         margin: 0 0 12px 0;
     }
 
     p {
-        font-size: 13px;
-        color: #555555;
+        font-size: 13.5px;
+        color: var(--text-secondary);
         line-height: 1.6;
         margin: 0 0 28px 0;
     }
@@ -300,58 +325,65 @@ function showEmploye(id) {
 
     button {
         padding: 10px 20px;
-        border-radius: 6px;
+        border-radius: 8px;
         font-size: 13px;
         font-weight: 600;
         cursor: pointer;
         border: none;
+        font-family: "Sora", sans-serif;
         transition: all 0.15s ease;
     }
 
     .btnConfirm {
-        background: #ef4444;
+        background: var(--error);
         color: #ffffff;
 
         &:hover {
-            background: #dc2626;
+            background: #e55b5b;
         }
     }
 
     .btnCancel {
-        background: #f3f4f6;
-        color: #4b5563;
+        background: var(--surface2);
+        color: var(--text-secondary);
+        border: 1px solid var(--border);
 
         &:hover {
-            background: #e5e7eb;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
         }
     }
 }
 
+/* Header Content Action Row */
 .topSection {
     display: flex;
     justify-content: space-between;
     align-items: center;
     gap: 20px;
     flex-wrap: wrap;
-    border-bottom: 1px solid #eeeeee;
+    border-bottom: 1px solid var(--border);
     padding-bottom: 20px;
+    margin-bottom: 24px;
 }
 
 .titleSection {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 6px;
 
     h2 {
-        font-size: 20px;
-        font-weight: 700;
-        letter-spacing: -0.3px;
+        font-size: 22px;
+        font-weight: 800;
+        letter-spacing: -0.5px;
         margin: 0;
+        color: var(--text-primary);
     }
 
     p {
-        color: #666666;
+        color: var(--text-secondary);
         font-size: 13px;
+        font-weight: 500;
         margin: 0;
     }
 }
@@ -359,36 +391,62 @@ function showEmploye(id) {
 .actionsSection {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 16px;
     flex-wrap: wrap;
 }
 
 .search input {
     width: 260px;
-    padding: 8px 16px;
-    border-radius: 6px;
-    border: 1px solid #e5e7eb;
-    background: #ffffff;
+    padding: 10px 16px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
     outline: none;
-    transition: 0.15s ease;
+    transition: all 0.15s ease;
     font-size: 13px;
-    color: #111111;
+    font-family: "Sora", sans-serif;
+    color: var(--text-primary);
+
+    &::placeholder {
+        color: var(--text-muted);
+    }
 
     &:focus {
-        border-color: #111111;
+        border-color: var(--accent);
     }
 }
 
 .filtering {
     display: flex;
     gap: 8px;
+
+    :deep(.secondaryButton) {
+        height: 38px;
+        border-radius: 10px;
+        font-size: 13px;
+
+        &.is-active {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-primary);
+            border-color: var(--text-muted);
+        }
+    }
 }
 
+.navigationGroup {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* Datagrid Layout Panel */
 .tableWrapper {
-    background: transparent;
-    border-radius: 0;
+    background: var(--surface);
+    border-radius: 16px;
+    border: 1px solid var(--border-strong);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    margin-bottom: 24px;
     overflow-x: auto;
-    box-shadow: none;
 }
 
 table {
@@ -399,33 +457,42 @@ table {
 
 th {
     text-align: left;
-    padding: 16px 12px;
+    padding: 18px 20px;
     font-size: 11px;
-    font-weight: 600;
+    font-weight: 700;
     text-transform: uppercase;
-    color: #999999;
-    letter-spacing: 0.5px;
-    border-bottom: 1px solid #eeeeee;
-
-    &.text-right {
-        text-align: right;
-    }
+    color: var(--text-secondary);
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid var(--border-strong);
+    background: rgba(0, 0, 0, 0.1);
 }
 
 .adminRow {
-    border-bottom: 1px solid #eeeeee;
+    border-bottom: 1px solid var(--border);
     transition: background 0.15s ease;
 
+    &:last-child {
+        border-bottom: none;
+    }
+
     &:hover {
-        background: #fdfdfd;
+        background: rgba(255, 255, 255, 0.015);
     }
 
     td {
-        padding: 16px 12px;
-        font-size: 14px;
-        color: #222222;
-        font-weight: 500;
+        padding: 16px 20px;
+        font-size: 13.5px;
         vertical-align: middle;
+
+        &.primaryText {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        &.secondaryText {
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
 
         &.text-right {
             text-align: right;
@@ -440,6 +507,7 @@ th {
     gap: 8px;
 }
 
+/* Button UI Actions Row */
 .tableViewBtn,
 .tableEditBtn,
 .tableDeleteBtn {
@@ -447,97 +515,127 @@ th {
     align-items: center;
     gap: 6px;
     padding: 6px 14px;
-    border-radius: 6px;
-    font-size: 13px;
+    border-radius: 8px;
+    font-size: 12.5px;
     font-weight: 600;
     cursor: pointer;
+    font-family: "Sora", sans-serif;
     transition: all 0.15s ease;
-    border: 1px solid transparent;
-    background: transparent;
+    border: 1px solid var(--border);
+    background: var(--surface2);
 
     span {
-        font-size: 16px;
+        font-size: 15px;
     }
 }
 
 .tableViewBtn {
-    border-color: #e5e7eb;
-    color: #475569;
+    color: var(--text-secondary);
 
     &:hover {
-        background: #f1f5f9;
-        color: #1e293b;
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--text-primary);
+        border-color: var(--border-strong);
     }
 }
 
 .tableEditBtn {
-    background: #111111;
+    background: var(--accent);
+    border: none;
     color: #ffffff;
 
     &:hover {
-        background: #333333;
+        background: var(--accent-hover);
     }
 }
 
 .tableDeleteBtn {
-    border-color: #e5e7eb;
-    color: #ef4444;
+    background: transparent;
+    border-color: rgba(255, 107, 107, 0.2);
+    color: var(--error);
 
     &:hover {
-        background: #fef2f2;
-        border-color: #fee2e2;
+        background: var(--error-dim);
+        border-color: var(--error);
     }
 }
 
-.status {
-    font-size: 12px;
-    font-weight: 600;
-    color: #ef4444;
+/* Status Flags */
+.statusBadge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11.5px;
+    font-weight: 700;
+    background: rgba(255, 107, 107, 0.1);
+    color: var(--error);
 
     &.active {
-        color: #10b981;
+        background: var(--success-dim);
+        color: var(--success);
     }
 }
 
 .emptyState {
     text-align: center;
-    padding: 40px;
-    color: #999999;
+    padding: 60px 40px;
+    color: var(--text-muted);
     font-size: 14px;
+    font-weight: 500;
 }
 
+/* Balanced Bottom Pagination Row Placement */
 .pagination {
     display: flex;
     justify-content: center;
     gap: 6px;
-    margin-top: 16px;
+    margin-top: auto;
+    padding-bottom: 10px;
 }
 
 .pagination button {
-    padding: 6px 12px;
-    border: 1px solid #e5e7eb;
-    background: white;
-    border-radius: 6px;
+    padding: 8px 14px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    border-radius: 8px;
     cursor: pointer;
     font-size: 13px;
-    font-weight: 500;
-    color: #4b5563;
-    transition: 0.15s ease;
+    font-weight: 600;
+    font-family: "Sora", sans-serif;
+    color: var(--text-secondary);
+    transition: all 0.15s ease;
 
     &:hover {
-        background: #f9fafb;
-        border-color: #d1d5db;
+        background: var(--surface2);
+        color: var(--text-primary);
+        border-color: var(--border-strong);
     }
 
     &.active {
-        background: #111111;
-        color: white;
-        border-color: #111111;
+        background: var(--text-primary);
+        color: var(--bg);
+        border-color: var(--text-primary);
     }
 
     &:disabled {
-        opacity: 0.4;
+        opacity: 0.25;
         cursor: not-allowed;
+        border-color: var(--border);
+        background: var(--surface);
+        color: var(--text-muted);
+    }
+}
+
+/* Responsive Structures */
+@media (max-width: 1024px) {
+    .topSection {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .actionsSection {
+        width: 100%;
+        justify-content: space-between;
     }
 }
 
@@ -546,14 +644,10 @@ th {
         padding: 20px;
     }
 
-    .topSection {
-        flex-direction: column;
-        align-items: stretch;
-    }
-
     .actionsSection {
         flex-direction: column;
         align-items: stretch;
+        gap: 14px;
     }
 
     .search input {
@@ -561,7 +655,19 @@ th {
     }
 
     .filtering {
-        justify-content: space-between;
+        justify-content: flex-start;
+        :deep(.secondaryButton) {
+            flex: 1;
+        }
+    }
+
+    .navigationGroup {
+        flex-direction: column;
+        align-items: stretch;
+        :deep(a) {
+            width: 100%;
+            text-align: center;
+        }
     }
 
     table {
@@ -580,7 +686,11 @@ th {
     }
 
     .adminRow {
-        padding: 16px 0;
+        padding: 20px 16px;
+        background: rgba(255, 255, 255, 0.01);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        margin-bottom: 12px;
     }
 
     td {
@@ -594,16 +704,22 @@ th {
             content: attr(data-label);
             font-size: 11px;
             text-transform: uppercase;
-            font-weight: 600;
-            color: #999999;
-            letter-spacing: 0.5px;
+            font-weight: 700;
+            color: var(--text-muted);
+            letter-spacing: 0.05em;
         }
     }
 
     .actionsCell {
         justify-content: flex-end;
-        width: 100%;
-        margin-top: 8px;
+        flex-wrap: wrap;
+        margin-top: 12px;
+        padding-top: 12px !important;
+        border-top: 1px solid var(--border) !important;
+        button {
+            flex: 1;
+            justify-content: center;
+        }
     }
 }
 </style>

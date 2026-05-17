@@ -1,6 +1,6 @@
 <script setup>
 import { route } from "ziggy-js";
-import { router } from "@inertiajs/vue3";
+import { router, usePage } from "@inertiajs/vue3";
 import LineChart from "../../components/Charts/LineChart.vue";
 import PieChart from "../../components/Charts/PieChart.vue";
 import MainLink from "../../components/Links/MainLink.vue";
@@ -27,27 +27,27 @@ const props = defineProps({
     worstEmployees: { type: Array, default: () => [] },
 });
 
-// 2. Map the structural datasets cleanly for your custom LineChart component
+// 2. Map the structural datasets cleanly using our brand accent configuration tokens
 const lineChartDatasets = computed(() => [
     {
         label: "À l'heure",
         data: props.chartData.punctuals || [],
-        color: "#059669", // Premium Emerald Green
+        color: "#4f7cff", // Core Brand Accent Blue
     },
     {
         label: "En Retard",
         data: props.chartData.lates || [],
-        color: "#eab308", // Amber Yellow
+        color: "#eab308", // Amber Warning
     },
     {
         label: "Départs Anticipés",
         data: props.chartData.earlies || [],
-        color: "#2563eb", // Royal Blue
+        color: "#a78bfa", // Purple Highlight
     },
     {
         label: "Absents",
         data: props.chartData.absents || [],
-        color: "#dc2626", // Crimson Red
+        color: "#ff6b6b", // Coral Crimson Red
     },
 ]);
 
@@ -73,8 +73,21 @@ const aggregateIncidents = computed(() => {
 </script>
 
 <template>
-    <div class="dashboard">
+    <div class="dashboardPage">
+        <div class="bg">
+            <div class="gridPattern"></div>
+            <div class="glowOrb orb1"></div>
+            <div class="glowOrb orb2"></div>
+        </div>
+
         <aside class="sidebar">
+            <div class="brand">
+                <div class="logoMark">
+                    <span class="material-symbols-rounded">qr_code_2</span>
+                </div>
+                <span class="logoText">QR<span class="thin">Coded</span></span>
+            </div>
+
             <p class="sidebarLabel">Super admin</p>
 
             <button
@@ -126,9 +139,10 @@ const aggregateIncidents = computed(() => {
             <section class="executiveSummaryGrid">
                 <div class="typoMetricWidget">
                     <div class="mainDisplay">
-                        <span class="metricValue"
-                            >{{ companyMetrics?.productivityScore ?? 0 }}%</span
-                        >
+                        <span class="metricValue">
+                            {{ companyMetrics?.productivityScore ?? 0
+                            }}<em class="unit">%</em>
+                        </span>
                         <span class="metricLabel">Indice de Productivité</span>
                     </div>
                     <div class="trendLine">
@@ -152,30 +166,32 @@ const aggregateIncidents = computed(() => {
 
                 <div class="typoMetricWidget">
                     <div class="mainDisplay">
-                        <span class="metricValue"
-                            >{{ companyMetrics?.presenceRate ?? 0 }}%</span
-                        >
+                        <span class="metricValue">
+                            {{ companyMetrics?.presenceRate ?? 0
+                            }}<em class="unit">%</em>
+                        </span>
                         <span class="metricLabel">Taux de Présence</span>
                     </div>
                     <div class="trendLine">
-                        <span class="trendBadge up">●</span>
+                        <span class="trendBadge up">● Live</span>
                         <span class="contextLabel">disponibilité brute</span>
                     </div>
                 </div>
 
                 <div class="typoMetricWidget">
                     <div class="mainDisplay">
-                        <span class="metricValue"
-                            >{{ companyMetrics?.punctualityRate ?? 0 }}%</span
-                        >
+                        <span class="metricValue">
+                            {{ companyMetrics?.punctualityRate ?? 0
+                            }}<em class="unit">%</em>
+                        </span>
                         <span class="metricLabel">Taux de Ponctualité</span>
                     </div>
                     <div class="trendLine">
-                        <span class="trendBadge textAccent">i</span>
-                        <span class="contextLabel"
-                            >impact tolérance:
-                            {{ companyMetrics?.toleranceImpact ?? 0 }}h</span
-                        >
+                        <span class="trendBadge textAccent">i Info</span>
+                        <span class="contextLabel">
+                            Tolérance:
+                            {{ companyMetrics?.toleranceImpact ?? 0 }}h
+                        </span>
                     </div>
                 </div>
             </section>
@@ -240,12 +256,12 @@ const aggregateIncidents = computed(() => {
                                     <span class="position"
                                         >#{{ index + 1 }}</span
                                     >
-                                    <span class="name"
-                                        >{{ emp.nom }} {{ emp.prenom }}</span
-                                    >
-                                    <span class="countBadge active"
-                                        >{{ emp.punctual_count }} scans</span
-                                    >
+                                    <span class="name">
+                                        {{ emp.nom }} {{ emp.prenom }}
+                                    </span>
+                                    <span class="countBadge active">
+                                        {{ emp.punctual_count }} scans
+                                    </span>
                                 </div>
                                 <p
                                     v-if="topEmployees.length === 0"
@@ -269,9 +285,9 @@ const aggregateIncidents = computed(() => {
                                     <span class="position textDanger"
                                         >#{{ index + 1 }}</span
                                     >
-                                    <span class="name"
-                                        >{{ emp.nom }} {{ emp.prenom }}</span
-                                    >
+                                    <span class="name">
+                                        {{ emp.nom }} {{ emp.prenom }}
+                                    </span>
                                     <span class="countBadge alert">
                                         {{ emp.late_count }}R /
                                         {{ emp.absent_count }}A
@@ -295,77 +311,196 @@ const aggregateIncidents = computed(() => {
 </template>
 
 <style scoped lang="scss">
-/* [Your pristine layouts rules remain active and unchanged] */
-.dashboard {
-    display: flex;
+@import url("https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&display=swap");
+
+.dashboardPage {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #16161f;
+    --border: rgba(255, 255, 255, 0.08);
+    --border-strong: rgba(255, 255, 255, 0.14);
+    --border-focus: rgba(79, 124, 255, 0.6);
+    --text-primary: #f0f0f8;
+    --text-secondary: #8888aa;
+    --text-muted: #55556a;
+    --accent: #4f7cff;
+    --accent-dim: rgba(79, 124, 255, 0.12);
+    --error: #ff6b6b;
+    --error-dim: rgba(255, 107, 107, 0.1);
+    --success: #059669;
+    --success-dim: rgba(5, 150, 105, 0.12);
+
+    font-family: "Sora", sans-serif;
+    /* Changed to 100% to cleanly adapt to MainLayout's internal height boundary */
+    height: 100%;
     width: 100%;
-    min-height: calc(100vh - 50px);
+    display: flex;
+    background: var(--bg);
+    position: relative;
+    overflow: hidden;
 }
 
+* {
+    box-sizing: border-box;
+}
+
+/* Background Micro-patterns & Glow Orbs */
+.bg {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.gridPattern {
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+    background-size: 50px 50px;
+    mask-image: radial-gradient(
+        ellipse 80% 80% at 50% 40%,
+        black 0%,
+        transparent 100%
+    );
+}
+
+.glowOrb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(100px);
+    &.orb1 {
+        width: 600px;
+        height: 600px;
+        background: radial-gradient(
+            circle,
+            rgba(79, 124, 255, 0.08) 0%,
+            transparent 70%
+        );
+        top: -150px;
+        right: -100px;
+    }
+    &.orb2 {
+        width: 500px;
+        height: 500px;
+        background: radial-gradient(
+            circle,
+            rgba(167, 139, 250, 0.06) 0%,
+            transparent 70%
+        );
+        bottom: -150px;
+        left: -100px;
+    }
+}
+
+/* Sidebar Branding Layout rules */
 .sidebar {
-    width: 220px;
+    width: 260px;
     flex-shrink: 0;
-    background: #ffffff;
-    border-right: 1px solid #f1f5f9;
+    background: var(--surface);
+    border-right: 1px solid var(--border-strong);
     display: flex;
     flex-direction: column;
-    padding: 24px 12px;
-    gap: 4px;
+    padding: 32px 18px;
+    gap: 6px;
+    z-index: 10;
+
+    .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 36px;
+        padding-left: 6px;
+
+        .logoMark {
+            width: 30px;
+            height: 30px;
+            background: var(--accent);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            span {
+                font-size: 16px;
+                color: #fff;
+            }
+        }
+
+        .logoText {
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+            color: var(--text-primary);
+        }
+        .thin {
+            font-weight: 300;
+            color: var(--text-secondary);
+        }
+    }
 }
 
 .sidebarLabel {
     font-size: 11px;
     font-weight: 600;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.05em;
     text-transform: uppercase;
-    color: #94a3b8;
-    padding: 0 8px 12px;
+    color: var(--text-muted);
+    padding: 0 12px 10px;
+    margin: 0;
 }
 
 .navBtn {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 9px 12px;
+    gap: 12px;
+    padding: 12px 14px;
     border-radius: 10px;
-    border: none;
+    border: 1px solid transparent;
     background: transparent;
+    font-family: "Sora", sans-serif;
     font-size: 13px;
-    font-weight: 500;
-    color: #0f172a;
+    font-weight: 600;
+    color: var(--text-secondary);
     cursor: pointer;
-    transition: background 0.15s ease;
+    transition: all 0.15s ease;
     text-align: left;
     width: 100%;
 
     span {
         font-size: 18px;
-        color: #94a3b8;
+        color: var(--text-muted);
+        transition: color 0.15s;
     }
 
     &:hover {
-        background: #f8fafc;
+        background: var(--surface2);
+        color: var(--text-primary);
         span {
-            color: #0f172a;
+            color: var(--text-primary);
         }
     }
 
     &.active {
-        background: #f1f5f9;
+        background: var(--accent-dim);
+        color: var(--text-primary);
+        border-color: rgba(79, 124, 255, 0.2);
         span {
-            color: #0f172a;
+            color: var(--accent);
         }
     }
 }
 
+/* Workspace Core Blocks */
 .content {
     flex: 1;
-    background: #f8fafc;
-    padding: 32px;
+    height: 100%;
+    padding: 40px 48px;
     display: flex;
     flex-direction: column;
-    gap: 36px; /* Expanded for high-end typographic separation spacing layout */
-    overflow-y: auto;
+    gap: 40px;
+    overflow-y: auto; /* Content handles its own layout depth scrolls elegantly here */
+    z-index: 10;
 }
 
 .headerFlexRow {
@@ -378,103 +513,118 @@ const aggregateIncidents = computed(() => {
 .pageHeader {
     display: flex;
     flex-direction: column;
-    gap: 4px;
 }
 
 .pageTitle {
-    font-size: 22px;
-    font-weight: 700;
-    color: #0f172a;
-    margin: 0;
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: -0.8px;
+    color: var(--text-primary);
+    margin: 0 0 4px 0;
 }
 
 .pageSubtitle {
-    font-size: 14px;
-    color: #64748b;
+    font-size: 13.5px;
+    color: var(--text-secondary);
     margin: 0;
 }
 
-/* Luxury Metric Typography Architecture Injector */
+/* Typographic High-End Metric Widgets */
 .executiveSummaryGrid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 48px;
-    border-bottom: 1px solid #e2e8f0;
-    padding-bottom: 32px;
+    gap: 32px;
 }
 
 .typoMetricWidget {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px 28px;
+    gap: 16px;
 
     .mainDisplay {
         display: flex;
         flex-direction: column;
-        gap: 4px;
+        gap: 6px;
 
         .metricValue {
-            font-size: 44px;
+            font-size: 42px;
             font-weight: 800;
             line-height: 1;
-            letter-spacing: -2px;
-            color: #0f172a;
+            letter-spacing: -1.5px;
+            color: var(--text-primary);
+
+            .unit {
+                font-style: normal;
+                font-size: 22px;
+                font-weight: 400;
+                color: var(--text-secondary);
+                margin-left: 2px;
+            }
         }
 
         .metricLabel {
             font-size: 11px;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: #64748b;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
         }
     }
 
     .trendLine {
         display: flex;
         align-items: center;
-        gap: 6px;
-        border-top: 1px solid #e2e8f0;
-        padding-top: 10px;
+        gap: 8px;
+        border-top: 1px solid var(--border);
+        padding-top: 14px;
         width: 100%;
-        max-width: 180px;
 
         .trendBadge {
             font-size: 11px;
             font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 4px;
 
             &.up {
-                color: #059669;
+                background: var(--success-dim);
+                color: var(--success);
             }
             &.down {
-                color: #dc2626;
+                background: var(--error-dim);
+                color: var(--error);
             }
             &.textAccent {
-                color: #2563eb;
+                background: var(--accent-dim);
+                color: var(--accent);
             }
         }
 
         .contextLabel {
             font-size: 11px;
-            color: #64748b;
+            color: var(--text-muted);
             font-weight: 500;
         }
     }
 }
 
+/* Cards & Layout Alignments */
 .dashboard-grid {
     display: grid;
     grid-template-columns: 1.6fr 1.4fr;
-    gap: 24px;
+    gap: 32px;
     width: 100%;
 }
 
 .chartCard {
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 16px;
-    padding: 24px;
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.01);
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: 20px;
+    padding: 28px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
     display: flex;
     flex-direction: column;
 }
@@ -483,38 +633,41 @@ const aggregateIncidents = computed(() => {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    margin-bottom: 20px;
+    margin-bottom: 24px;
+    gap: 16px;
 }
 
 .badge {
     display: inline-block;
-    background: #f1f5f9;
-    color: #475569;
-    font-size: 11px;
-    font-weight: 600;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    font-size: 10px;
+    font-weight: 700;
     padding: 4px 8px;
     border-radius: 6px;
     text-transform: uppercase;
-    margin-bottom: 6px;
-    letter-spacing: 0.03em;
+    margin-bottom: 8px;
+    letter-spacing: 0.05em;
 }
 
 .cardTitle {
     font-size: 16px;
-    font-weight: 600;
-    color: #0f172a;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    color: var(--text-primary);
     margin: 0;
 }
 
 .cardSubtitle {
     font-size: 13px;
-    color: #64748b;
+    color: var(--text-secondary);
     margin: 4px 0 0 0;
 }
 
 .statSummaryContainer {
     display: flex;
-    gap: 24px;
+    gap: 20px;
 }
 
 .statSummary {
@@ -524,54 +677,59 @@ const aggregateIncidents = computed(() => {
 }
 
 .statLabel {
-    font-size: 12px;
-    color: #64748b;
-    font-weight: 500;
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
 }
 
 .statValue {
-    font-size: 24px;
-    font-weight: 700;
+    font-size: 22px;
+    font-weight: 800;
     line-height: 1.2;
 }
 
 .adminColor .statValue {
-    color: #059669;
+    color: var(--accent);
 }
 .employeColor .statValue {
-    color: #dc2626;
+    color: var(--error);
 }
 
 .chartContainer {
     margin-top: auto;
     width: 100%;
+    background: var(--surface2);
+    border-radius: 12px;
+    padding: 16px;
+    border: 1px solid var(--border);
 }
 
 /* Leaderboards Visual Alignment Blocks */
 .leaderboardGrid {
     display: flex;
     flex-direction: column;
-    gap: 24px;
-    margin-top: 12px;
+    gap: 28px;
+    margin-top: 6px;
 }
 
 .rankingBlock {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
 
     .rankingTitle {
         font-size: 11px;
         font-weight: 700;
         text-transform: uppercase;
         margin: 0;
-        letter-spacing: 0.02em;
+        letter-spacing: 0.04em;
 
         &.textSuccess {
-            color: #059669;
+            color: var(--success);
         }
         &.textDanger {
-            color: #dc2626;
+            color: var(--error);
         }
     }
 }
@@ -579,82 +737,100 @@ const aggregateIncidents = computed(() => {
 .rankList {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 8px;
 }
 
 .rankRow {
     display: flex;
     align-items: center;
-    background: #f8fafc;
-    border: 1px solid #f1f5f9;
-    padding: 8px 12px;
-    border-radius: 8px;
-    font-size: 13px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 13.5px;
+    transition: border-color 0.15s;
+
+    &:hover {
+        border-color: var(--border-strong);
+    }
 
     .position {
         font-weight: 700;
-        width: 28px;
-        color: #94a3b8;
+        width: 32px;
+        color: var(--text-muted);
     }
 
     .name {
         flex: 1;
         font-weight: 600;
-        color: #1e293b;
+        color: var(--text-primary);
     }
 
     .countBadge {
         font-size: 11px;
         font-weight: 700;
-        padding: 2px 6px;
-        border-radius: 4px;
+        padding: 3px 8px;
+        border-radius: 6px;
 
         &.active {
-            background: #d1fae5;
-            color: #065f46;
+            background: var(--success-dim);
+            color: var(--success);
         }
 
         &.alert {
-            background: #fee2e2;
-            color: #991b1b;
+            background: var(--error-dim);
+            color: var(--error);
         }
     }
 }
 
 .emptyLabel {
     font-size: 12px;
-    color: #94a3b8;
+    color: var(--text-muted);
     margin: 0;
     font-style: italic;
 }
 
-@media (max-width: 1200px) {
+/* Adaptive Responsiveness Controls */
+@media (max-width: 1340px) {
     .dashboard-grid {
         grid-template-columns: 1fr;
     }
+}
+
+@media (max-width: 1024px) {
     .executiveSummaryGrid {
         grid-template-columns: 1fr;
-        gap: 24px;
+        gap: 16px;
     }
 }
 
 @media (max-width: 768px) {
-    .dashboard {
+    .dashboardPage {
         flex-direction: column;
+        height: auto;
+        overflow: auto;
     }
     .sidebar {
         width: 100%;
         flex-direction: row;
         overflow-x: auto;
-        padding: 12px;
+        padding: 16px;
         border-right: none;
-        border-bottom: 1px solid #f1f5f9;
+        border-bottom: 1px solid var(--border-strong);
+
+        .brand {
+            margin-bottom: 0;
+            margin-right: 16px;
+        }
     }
     .sidebarLabel {
         display: none;
     }
     .content {
-        padding: 20px 16px;
+        padding: 24px 20px;
+        height: auto;
+        overflow-y: visible;
     }
     .chartHeader {
         flex-direction: column;

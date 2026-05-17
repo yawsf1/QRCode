@@ -1,16 +1,18 @@
 {
-    "$schema": "https://www.schemastore.org/package.json",
     "private": true,
     "type": "module",
     "scripts": {
+        "dev": "vite",
         "build": "vite build",
-        "dev": "vite"
+        "start-all": "concurrently --kill-others \"./vendor/bin/sail up\" \"sleep 4 && npm run dev\" \"sleep 8 && ./vendor/bin/sail artisan reverb:start\" \"sleep 8 && ./vendor/bin/sail artisan queue:work\""
     },
     "devDependencies": {
         "@tailwindcss/vite": "^4.0.0",
         "@vitejs/plugin-vue": "^6.0.6",
-        "concurrently": "^9.0.1",
+        "concurrently": "^9.2.1",
+        "laravel-echo": "^2.3.4",
         "laravel-vite-plugin": "^3.1",
+        "pusher-js": "^8.5.0",
         "sass": "^1.99.0",
         "tailwindcss": "^4.0.0",
         "vite": "^8.0.0"

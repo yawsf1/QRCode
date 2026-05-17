@@ -125,14 +125,16 @@ onUnmounted(() => {
 .dashboard {
     display: flex;
     width: 100%;
-    min-height: calc(100vh - 50px);
+    flex-grow: 1;
+    min-height: calc(100vh - 60px);
+    background: #0a0a0f;
 }
 
 .sidebar {
     width: 220px;
     flex-shrink: 0;
-    background: #ffffff;
-    border-right: 1px solid #f1f5f9;
+    background: #111118;
+    border-right: 1px solid rgba(255, 255, 255, 0.06);
     display: flex;
     flex-direction: column;
     padding: 24px 12px;
@@ -144,8 +146,9 @@ onUnmounted(() => {
     font-weight: 600;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    color: #94a3b8;
+    color: #55556a;
     padding: 0 8px 12px;
+    margin: 0;
 }
 
 .navBtn {
@@ -158,35 +161,38 @@ onUnmounted(() => {
     background: transparent;
     font-size: 13px;
     font-weight: 500;
-    color: #0f172a;
+    color: #8888aa;
     cursor: pointer;
-    transition: background 0.15s ease;
+    transition: all 0.15s ease;
     text-align: left;
     width: 100%;
+    font-family: inherit;
 
     span {
         font-size: 18px;
-        color: #94a3b8;
+        color: #55556a;
     }
 
     &:hover {
-        background: #f8fafc;
+        background: #16161f;
+        color: #f0f0f8;
         span {
-            color: #0f172a;
+            color: #8888aa;
         }
     }
 
     &.active {
-        background: #f1f5f9;
+        background: rgba(255, 255, 255, 0.08);
+        color: #f0f0f8;
         span {
-            color: #0f172a;
+            color: #4f7cff;
         }
     }
 }
 
 .content {
     flex: 1;
-    background: #f8fafc;
+    background: #0a0a0f;
     padding: 32px;
     display: flex;
     flex-direction: column;
@@ -203,13 +209,13 @@ onUnmounted(() => {
 .pageTitle {
     font-size: 22px;
     font-weight: 700;
-    color: #0f172a;
+    color: #f0f0f8;
     margin: 0;
 }
 
 .pageSubtitle {
     font-size: 14px;
-    color: #64748b;
+    color: #8888aa;
     margin: 0;
 }
 
@@ -218,23 +224,23 @@ onUnmounted(() => {
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 50vh;
-    background: #f8fafc;
+    flex-grow: 1;
+    background: #0a0a0f;
     width: 100%;
 }
 
 .qr-card.wide-format {
     display: flex;
-    flex-direction: row; /* Arranges elements side-by-side */
+    flex-direction: row;
     align-items: center;
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
+    background: #111118;
+    border: 1px solid rgba(255, 255, 255, 0.06);
     border-radius: 24px;
     padding: 32px;
     width: 100%;
-    max-width: 680px; /* Increased width bounds */
+    max-width: 680px;
     gap: 36px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
 }
 
 .qr-graphic-side {
@@ -242,19 +248,18 @@ onUnmounted(() => {
 }
 
 .qr-viewport {
-    background: #ffffff;
+    background: #ffffff; /* Keeping the immediate frame white for pristine QR rendering scanner capability */
     padding: 12px;
-    border: 1px solid #e2e8f0;
+    border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 16px;
     display: flex;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.01);
 }
 
 .qr-info-side {
     flex: 1;
     display: flex;
     flex-direction: column;
-    text-align: left; /* Changes text-alignment to match landscape profile */
+    text-align: left;
 }
 
 .badge-row {
@@ -264,9 +269,9 @@ onUnmounted(() => {
 .status-badge {
     font-size: 11px;
     font-weight: 700;
-    color: #059669;
+    color: #10b981;
     text-transform: uppercase;
-    background: #d1fae5;
+    background: rgba(16, 185, 129, 0.12);
     padding: 4px 10px;
     border-radius: 20px;
     letter-spacing: 0.05em;
@@ -275,13 +280,13 @@ onUnmounted(() => {
 h2 {
     font-size: 22px;
     font-weight: 700;
-    color: #0f172a;
+    color: #f0f0f8;
     margin: 0 0 8px 0;
 }
 
 .subtitle {
     font-size: 14px;
-    color: #64748b;
+    color: #8888aa;
     line-height: 1.5;
     margin: 0 0 24px 0;
 }
@@ -290,8 +295,8 @@ h2 {
     display: flex;
     align-items: center;
     gap: 8px;
-    color: #94a3b8;
-    border-top: 1px solid #f1f5f9;
+    color: #55556a;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
     padding-top: 16px;
 
     small {
@@ -319,6 +324,7 @@ h2 {
 @media (max-width: 768px) {
     .dashboard {
         flex-direction: column;
+        min-height: auto;
     }
     .sidebar {
         width: 100%;
@@ -326,7 +332,7 @@ h2 {
         overflow-x: auto;
         padding: 12px;
         border-right: none;
-        border-bottom: 1px solid #f1f5f9;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
     }
     .sidebarLabel {
         display: none;
@@ -335,7 +341,7 @@ h2 {
         padding: 20px 16px;
     }
     .qr-card.wide-format {
-        flex-direction: column; /* Soft fallback to vertical stack on mobile phones */
+        flex-direction: column;
         text-align: center;
         padding: 24px;
         gap: 20px;

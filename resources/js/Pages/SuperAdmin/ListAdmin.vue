@@ -80,14 +80,15 @@ function deleteAdminWithId(adminId) {
                 <h3>Confirmer la suppression</h3>
                 <p>
                     Êtes-vous sûr de vouloir supprimer cet administrateur ?
-                    Cette action est irréversible.
+                    Cette action est irréversible et révoquera tous ses accès
+                    associés.
                 </p>
                 <div class="modalActions">
-                    <button class="btnConfirm" @click="deleteAdmin">
-                        Oui, supprimer
-                    </button>
                     <button class="btnCancel" @click="showDeleteModal = false">
                         Annuler
+                    </button>
+                    <button class="btnConfirm" @click="deleteAdmin">
+                        Oui, supprimer
                     </button>
                 </div>
             </div>
@@ -96,7 +97,9 @@ function deleteAdminWithId(adminId) {
         <div class="topSection">
             <div class="titleSection">
                 <h2>Liste des admins</h2>
-                <p>{{ admins.total }} admin(s)</p>
+                <p class="counterText">
+                    {{ admins.total }} administrateur(s) inscrit(s)
+                </p>
             </div>
 
             <div class="actionsSection">
@@ -111,24 +114,28 @@ function deleteAdminWithId(adminId) {
                 <div class="filtering">
                     <SecondaryButton
                         text="No. Employee"
+                        :class="{ 'filter-active': sortBy === 'employees' }"
                         @click="sortBy = 'employees'"
                     />
 
                     <SecondaryButton
                         text="Plus récent"
+                        :class="{ 'filter-active': sortBy === 'recent' }"
                         @click="sortBy = 'recent'"
                     />
                 </div>
 
-                <MainLink
-                    :link="route('admin.register.form')"
-                    text="Ajouter un admin"
-                />
+                <div class="linkCluster">
+                    <MainLink
+                        :link="route('admin.register.form')"
+                        text="Ajouter un admin"
+                    />
 
-                <MainLink
-                    :link="route('super-admin.dashboard')"
-                    text="← Retour au dashboard"
-                />
+                    <MainLink
+                        :link="route('super-admin.dashboard')"
+                        text="← Dashboard"
+                    />
+                </div>
             </div>
         </div>
 
@@ -141,7 +148,7 @@ function deleteAdminWithId(adminId) {
                         <th>Email</th>
                         <th>Téléphone</th>
                         <th>Date création</th>
-                        <th>Employees</th>
+                        <th>Employés</th>
                         <th>Statut</th>
                         <th class="text-right">Actions</th>
                     </tr>
@@ -153,9 +160,13 @@ function deleteAdminWithId(adminId) {
                         :key="admin.id"
                         class="adminRow"
                     >
-                        <td data-label="Nom">{{ admin.nom }}</td>
+                        <td data-label="Nom" class="text-highlight">
+                            {{ admin.nom }}
+                        </td>
                         <td data-label="Prénom">{{ admin.prenom }}</td>
-                        <td data-label="Email">{{ admin.email }}</td>
+                        <td data-label="Email" class="text-secondary-dim">
+                            {{ admin.email }}
+                        </td>
                         <td data-label="Téléphone">
                             {{ admin.telephone || "—" }}
                         </td>
@@ -164,8 +175,10 @@ function deleteAdminWithId(adminId) {
                             {{ formatDate(admin.created_at) }}
                         </td>
 
-                        <td data-label="Employees">
-                            {{ admin.employes_count }}
+                        <td data-label="Employés" class="text-center-desktop">
+                            <span class="countBadge">{{
+                                admin.employes_count
+                            }}</span>
                         </td>
 
                         <td data-label="Statut">
@@ -177,7 +190,7 @@ function deleteAdminWithId(adminId) {
                             </span>
                         </td>
 
-                        <td data-label="Supprimer" class="text-right">
+                        <td data-label="Action" class="text-right">
                             <button
                                 class="tableDeleteBtn"
                                 @click="deleteAdminWithId(admin.id)"
@@ -192,7 +205,7 @@ function deleteAdminWithId(adminId) {
 
                     <tr v-if="admins.data.length === 0">
                         <td colspan="8" class="emptyState">
-                            Aucun admin trouvé
+                            Aucun administrateur trouvé dans le système
                         </td>
                     </tr>
                 </tbody>
@@ -213,106 +226,131 @@ function deleteAdminWithId(adminId) {
 </template>
 
 <style scoped lang="scss">
+@import url("https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap");
+
 .containerOfList {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #16161f;
+    --border: rgba(255, 255, 255, 0.06);
+    --border-strong: rgba(255, 255, 255, 0.12);
+    --text-primary: #f0f0f8;
+    --text-secondary: #8888aa;
+    --text-muted: #55556a;
+    --accent: #4f7cff;
+    --accent-hover: #3b66eb;
+    --error: #ff6b6b;
+    --error-dim: rgba(255, 107, 107, 0.1);
+    --success: #10b981;
+    --success-dim: rgba(16, 185, 129, 0.15);
+
+    font-family: "Sora", sans-serif;
     width: 100%;
-    min-height: calc(100vh - 50px);
-    padding: 24px;
+    min-height: calc(100vh - 60px);
+    padding: 32px 40px;
     display: flex;
     flex-direction: column;
-    gap: 24px;
-    position: relative;
+    gap: 28px;
+    background: var(--bg);
+    color: var(--text-primary);
+    box-sizing: border-box;
 }
 
+/* CONFIRMATION OVERLAYS */
 .modalOverlay {
     position: fixed;
     top: 0;
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: rgba(15, 23, 42, 0.6);
+    background: rgba(5, 5, 8, 0.75);
     backdrop-filter: blur(4px);
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 200;
+    z-index: 1000;
 }
 
 .modalBox {
-    background: #ffffff;
-    padding: 32px;
+    background: var(--surface);
+    padding: 36px;
     border-radius: 16px;
-    max-width: 400px;
+    max-width: 440px;
     width: 90%;
-    text-align: center;
-    box-shadow:
-        0 20px 25px -5px rgba(0, 0, 0, 0.1),
-        0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    text-align: left;
+    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.5);
+    border: 1px solid var(--border-strong);
     display: flex;
     flex-direction: column;
-    align-items: center;
 
     .modalIcon {
-        font-size: 48px;
-        color: #ef4444;
+        font-size: 32px;
+        color: var(--error);
         margin-bottom: 16px;
+        align-self: flex-start;
     }
 
     h3 {
         font-size: 18px;
         font-weight: 700;
-        color: #0f172a;
-        margin: 0 0 8px 0;
+        color: var(--text-primary);
+        margin: 0 0 12px 0;
+        letter-spacing: -0.3px;
     }
 
     p {
-        font-size: 14px;
-        color: #64748b;
-        line-height: 1.5;
-        margin: 0 0 24px 0;
+        font-size: 13.5px;
+        color: var(--text-secondary);
+        line-height: 1.6;
+        margin: 0 0 28px 0;
     }
 }
 
 .modalActions {
     display: flex;
     gap: 12px;
+    justify-content: flex-end;
     width: 100%;
 
     button {
-        flex: 1;
-        padding: 10px 16px;
+        padding: 10px 20px;
         border-radius: 8px;
-        font-size: 14px;
-        font-weight: 500;
+        font-size: 13px;
+        font-weight: 600;
         cursor: pointer;
-        transition: background 0.15s ease;
+        border: none;
+        font-family: "Sora", sans-serif;
+        transition: all 0.15s ease;
     }
 
     .btnConfirm {
-        background: #ef4444;
-        color: #ffffff;
-        border: none;
-
+        background: var(--error);
+        color: white;
         &:hover {
-            background: #dc2626;
+            background: #e55b5b;
         }
     }
 
     .btnCancel {
-        background: #f1f5f9;
-        color: #334155;
-        border: 1px solid #e2e8f0;
-
+        background: var(--surface2);
+        color: var(--text-secondary);
+        border: 1px solid var(--border);
         &:hover {
-            background: #e2e8f0;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-primary);
         }
     }
 }
 
+/* TOP STRUCTURE BAR */
 .topSection {
     display: flex;
     justify-content: space-between;
+    align-items: center;
     gap: 20px;
     flex-wrap: wrap;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 20px;
 }
 
 .titleSection {
@@ -321,66 +359,94 @@ function deleteAdminWithId(adminId) {
     gap: 4px;
 
     h2 {
-        font-size: 28px;
+        font-size: 24px;
         font-weight: 700;
+        margin: 0;
+        letter-spacing: -0.5px;
     }
 
-    p {
-        color: #64748b;
-        font-size: 14px;
+    .counterText {
+        color: var(--text-secondary);
+        font-size: 13.5px;
+        margin: 0;
     }
 }
 
 .actionsSection {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 16px;
     flex-wrap: wrap;
 }
 
 .search input {
     width: 260px;
-    padding: 12px 16px;
-    border-radius: 12px;
-    border: 1px solid #e2e8f0;
+    padding: 11px 16px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-primary);
     outline: none;
-    transition: 0.2s ease;
-    font-size: 14px;
+    transition: all 0.15s ease;
+    font-size: 13.5px;
+    font-family: inherit;
+
+    &::placeholder {
+        color: var(--text-muted);
+    }
 
     &:focus {
-        border-color: #2563eb;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 1px var(--accent);
     }
 }
 
 .filtering {
     display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
+    gap: 8px;
+
+    :deep(button) {
+        border-radius: 10px;
+        font-size: 13px;
+        font-weight: 600;
+        padding: 10px 16px;
+    }
 }
 
+.linkCluster {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+/* DATATABLE WRAPPER OBJECTS */
 .tableWrapper {
-    background: white;
-    border-radius: 22px;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
+    border-radius: 16px;
     overflow-x: auto;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    width: 100%;
 }
 
 table {
     width: 100%;
     border-collapse: collapse;
-    min-width: 900px;
+    min-width: 950px;
 }
 
 thead {
-    background: #f8fafc;
+    background: var(--surface2);
 
     th {
         text-align: left;
-        padding: 18px 20px;
-        font-size: 14px;
-        font-weight: 600;
-        color: #64748b;
-        border-bottom: 1px solid #e2e8f0;
+        padding: 16px 20px;
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 1px solid var(--border-strong);
 
         &.text-right {
             text-align: right;
@@ -390,37 +456,68 @@ thead {
 
 tbody {
     .adminRow {
-        transition: 0.2s ease;
+        border-bottom: 1px solid var(--border);
+        transition: background 0.15s ease;
+
+        &:last-child {
+            border-bottom: none;
+        }
 
         &:hover {
-            background: #f8fafc;
+            background: rgba(255, 255, 255, 0.02);
         }
 
         td {
-            padding: 18px 20px;
-            border-bottom: 1px solid #f1f5f9;
+            padding: 16px 20px;
             font-size: 14px;
+            color: var(--text-primary);
             vertical-align: middle;
 
             &.text-right {
                 text-align: right;
             }
+
+            &.text-center-desktop {
+                text-align: left;
+                padding-left: 32px;
+            }
         }
     }
+}
+
+.text-highlight {
+    font-weight: 600;
+    color: var(--text-primary) !important;
+}
+
+.text-secondary-dim {
+    color: var(--text-secondary) !important;
+}
+
+.countBadge {
+    display: inline-flex;
+    padding: 2px 8px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-primary);
 }
 
 .tableDeleteBtn {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    background: #fee2e2;
-    color: #ef4444;
-    border: 1px solid #fecaca;
-    padding: 8px 14px;
+    background: transparent;
+    color: var(--error);
+    border: 1px solid rgba(255, 107, 107, 0.2);
+    padding: 6px 14px;
     border-radius: 8px;
-    font-size: 13px;
+    font-size: 12.5px;
     font-weight: 600;
     cursor: pointer;
+    font-family: inherit;
     transition: all 0.15s ease;
 
     span {
@@ -428,80 +525,96 @@ tbody {
     }
 
     &:hover {
-        background: #ef4444;
-        color: #ffffff;
-        border-color: #ef4444;
+        background: var(--error-dim);
+        border-color: var(--error);
     }
 }
 
 .status {
-    padding: 6px 14px;
-    border-radius: 999px;
-    font-size: 13px;
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 12px;
     font-weight: 600;
+    display: inline-flex;
 
     &.active {
-        background: #dcfce7;
-        color: #15803d;
+        background: var(--success-dim);
+        color: var(--success);
+        border: 1px solid rgba(16, 185, 129, 0.2);
     }
 
     &.inactive {
-        background: #fee2e2;
-        color: #b91c1c;
+        background: var(--error-dim);
+        color: var(--error);
+        border: 1px solid rgba(255, 107, 107, 0.2);
     }
 }
 
 .emptyState {
     text-align: center;
-    padding: 30px;
-    color: #94a3b8;
+    padding: 40px !important;
+    color: var(--text-muted);
+    font-size: 14px;
+    font-weight: 500;
 }
 
+/* PAGINATION ARCHITECTURE CONTAINER */
 .pagination {
     display: flex;
     justify-content: center;
-    gap: 8px;
+    gap: 6px;
     flex-wrap: wrap;
+    margin-top: 8px;
 }
 
 .pagination button {
-    padding: 8px 12px;
-    border: 1px solid #e2e8f0;
-    background: white;
+    padding: 8px 14px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-secondary);
     border-radius: 8px;
     cursor: pointer;
-    font-size: 14px;
-    transition: 0.2s ease;
+    font-size: 13px;
+    font-family: inherit;
+    font-weight: 500;
+    transition: all 0.15s ease;
+
+    &:hover:not(:disabled) {
+        background: var(--surface2);
+        color: var(--text-primary);
+        border-color: var(--text-muted);
+    }
+
+    &.active {
+        background: var(--accent);
+        color: white;
+        border-color: var(--accent);
+        font-weight: 600;
+    }
+
+    &:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+    }
 }
 
-.pagination button:hover {
-    background: #f8fafc;
-}
-
-.pagination button.active {
-    background: #2563eb;
-    color: white;
-    border-color: #2563eb;
-}
-
-.pagination button:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-}
-
-@media (max-width: 768px) {
+/* MOBILE DISPLAY BREAKPOINTS QUERY RESPONSIVENESS */
+@media (max-width: 850px) {
     .containerOfList {
-        padding: 16px;
+        padding: 24px 16px;
     }
 
     .topSection {
         flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
     }
 
     .actionsSection {
         width: 100%;
         flex-direction: column;
         align-items: stretch;
+        gap: 12px;
     }
 
     .search input {
@@ -510,7 +623,23 @@ tbody {
 
     .filtering {
         width: 100%;
-        justify-content: space-between;
+
+        :deep(button) {
+            flex: 1;
+            text-align: center;
+            justify-content: center;
+        }
+    }
+
+    .linkCluster {
+        width: 100%;
+        flex-direction: column;
+
+        :deep(a),
+        :deep(button) {
+            width: 100%;
+            text-align: center;
+        }
     }
 
     table {
@@ -526,29 +655,40 @@ tbody {
     td {
         display: block;
         width: 100%;
+        box-sizing: border-box;
     }
 
     .adminRow {
-        padding: 14px;
-        border-bottom: 1px solid #e2e8f0;
+        padding: 16px;
+        border-bottom: 1px solid var(--border-strong) !important;
+
+        &:last-child {
+            border-bottom: none !important;
+        }
     }
 
     td {
         display: flex !important;
         justify-content: space-between;
         align-items: center;
-        padding: 12px 0 !important;
+        padding: 10px 0 !important;
         border: none !important;
         text-align: left !important;
 
         &::before {
             content: attr(data-label);
             font-weight: 600;
-            color: #64748b;
+            font-size: 12.5px;
+            color: var(--text-secondary);
         }
 
         &.text-right {
             justify-content: space-between;
+            margin-top: 4px;
+        }
+
+        &.text-center-desktop {
+            padding-left: 0 !important;
         }
     }
 

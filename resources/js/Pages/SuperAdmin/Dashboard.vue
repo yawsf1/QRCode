@@ -17,21 +17,12 @@ const chartDatasets = computed(() => [
     {
         label: "Administrateurs",
         data: props.salesData || [],
-        color: "#4f46e5",
+        color: "#4f7cff" /* Matches dark theme accent */,
     },
     {
         label: "Employés",
         data: props.salesData2 || [],
         color: "#06b6d4",
-    },
-]);
-
-const pieColors = ["#4f46e5", "#06b6d4", "#10b981", "#f59e0b", "#ec4899"];
-
-const pieDatasets = computed(() => [
-    {
-        data: props.employeeCounts || [],
-        colors: pieColors.slice(0, (props.entrepriseNames || []).length),
     },
 ]);
 
@@ -133,17 +124,35 @@ const totalEmployesThisYear = computed(() => {
 </template>
 
 <style scoped lang="scss">
+@import url("https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap");
+
 .dashboard {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #16161f;
+    --border: rgba(255, 255, 255, 0.06);
+    --border-strong: rgba(255, 255, 255, 0.12);
+    --text-primary: #f0f0f8;
+    --text-secondary: #8888aa;
+    --text-muted: #55556a;
+    --accent: #4f7cff;
+    --accent-hover: #3b66eb;
+
+    font-family: "Sora", sans-serif;
     display: flex;
     width: 100%;
-    min-height: calc(100vh - 50px);
+    max-width: 100%;
+    min-height: calc(100vh - 60px);
+    background: var(--bg);
+    color: var(--text-primary);
+    box-sizing: border-box;
 }
 
 .sidebar {
     width: 220px;
     flex-shrink: 0;
-    background: #ffffff;
-    border-right: 1px solid #f1f5f9;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
     display: flex;
     flex-direction: column;
     padding: 24px 12px;
@@ -155,8 +164,9 @@ const totalEmployesThisYear = computed(() => {
     font-weight: 600;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    color: #94a3b8;
+    color: var(--text-muted);
     padding: 0 8px 12px;
+    margin: 0;
 }
 
 .navBtn {
@@ -169,39 +179,44 @@ const totalEmployesThisYear = computed(() => {
     background: transparent;
     font-size: 13px;
     font-weight: 500;
-    color: #0f172a;
+    color: var(--text-secondary);
     cursor: pointer;
-    transition: background 0.15s ease;
+    transition: all 0.15s ease;
     text-align: left;
     width: 100%;
+    font-family: inherit;
 
     span {
         font-size: 18px;
-        color: #94a3b8;
+        color: var(--text-muted);
     }
 
     &:hover {
-        background: #f8fafc;
+        background: var(--surface2);
+        color: var(--text-primary);
         span {
-            color: #0f172a;
+            color: var(--text-secondary);
         }
     }
 
     &.active {
-        background: #f1f5f9;
+        background: rgba(255, 255, 255, 0.08);
+        color: var(--text-primary);
+        font-weight: 600;
         span {
-            color: #0f172a;
+            color: var(--accent);
         }
     }
 }
 
 .content {
     flex: 1;
-    background: #f8fafc;
+    background: var(--bg);
     padding: 32px;
     display: flex;
     flex-direction: column;
     gap: 24px;
+    min-width: 0;
     overflow-y: auto;
 }
 
@@ -214,13 +229,14 @@ const totalEmployesThisYear = computed(() => {
 .pageTitle {
     font-size: 22px;
     font-weight: 700;
-    color: #0f172a;
+    color: var(--text-primary);
     margin: 0;
+    letter-spacing: -0.5px;
 }
 
 .pageSubtitle {
     font-size: 14px;
-    color: #64748b;
+    color: var(--text-secondary);
     margin: 0;
 }
 
@@ -232,13 +248,14 @@ const totalEmployesThisYear = computed(() => {
 }
 
 .chartCard {
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
+    background: var(--surface);
+    border: 1px solid var(--border-strong);
     border-radius: 16px;
     padding: 24px;
-    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.01);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
     display: flex;
     flex-direction: column;
+    min-width: 0;
 }
 
 .chartHeader {
@@ -246,37 +263,44 @@ const totalEmployesThisYear = computed(() => {
     justify-content: space-between;
     align-items: flex-start;
     margin-bottom: 20px;
+    gap: 16px;
+}
+
+.meta {
+    min-width: 0;
 }
 
 .badge {
     display: inline-block;
-    background: #f1f5f9;
-    color: #475569;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
     font-size: 11px;
     font-weight: 600;
     padding: 4px 8px;
     border-radius: 6px;
     text-transform: uppercase;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
     letter-spacing: 0.03em;
 }
 
 .cardTitle {
     font-size: 16px;
-    font-weight: 600;
-    color: #0f172a;
+    font-weight: 700;
+    color: var(--text-primary);
     margin: 0;
 }
 
 .cardSubtitle {
     font-size: 13px;
-    color: #64748b;
+    color: var(--text-secondary);
     margin: 4px 0 0 0;
 }
 
 .statSummaryContainer {
     display: flex;
     gap: 24px;
+    flex-shrink: 0;
 }
 
 .statSummary {
@@ -286,25 +310,32 @@ const totalEmployesThisYear = computed(() => {
 }
 
 .statLabel {
-    font-size: 12px;
-    color: #64748b;
-    font-weight: 500;
+    font-size: 11px;
+    color: var(--text-secondary);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
 }
 
 .statValue {
     font-size: 24px;
     font-weight: 700;
     line-height: 1.2;
+    margin-top: 2px;
 }
 
 .adminColor .statValue {
-    color: #4f46e5;
+    color: var(--accent);
 }
 .employeColor .statValue {
     color: #06b6d4;
 }
+
 .chartContainer {
     margin-top: auto;
+    width: 100%;
+    min-height: 260px;
+    position: relative;
 }
 
 @media (max-width: 1200px) {
@@ -323,7 +354,7 @@ const totalEmployesThisYear = computed(() => {
         overflow-x: auto;
         padding: 12px;
         border-right: none;
-        border-bottom: 1px solid #f1f5f9;
+        border-bottom: 1px solid var(--border);
     }
     .sidebarLabel {
         display: none;
@@ -333,6 +364,7 @@ const totalEmployesThisYear = computed(() => {
     }
     .chartHeader {
         flex-direction: column;
+        align-items: stretch;
         gap: 16px;
     }
     .statSummaryContainer {

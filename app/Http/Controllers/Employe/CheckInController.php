@@ -33,9 +33,8 @@ class CheckInController extends Controller
         }
 
         // 2. Prevent double clocking operations inside the same working day
-        // Fixed: Use date_heure_scan instead of created_at to check correctly
         $alreadyScanned = Presence::where('user_id', $employee->id)
-            ->whereDate('date_heure_scan', Carbon::today())
+            ->whereDate('created_at', Carbon::today())
             ->exists();
 
         if ($alreadyScanned) {
@@ -58,35 +57,23 @@ class CheckInController extends Controller
         $currentTime = Carbon::parse($now->toTimeString());
         $deadlineTime = $targetStartTime->copy()->addMinutes($toleranceMinutes);
 
-        // Calculate minute differential variations safely
-        // Absolute difference between current time and target start time
-        $minuteDifference = (int) $currentTime->diffInMinutes($targetStartTime, false);
-
-        // Classify standard status matching rules using your database Enum definitions
+        // Classify standard status matching rules
         if ($currentTime->lessThanOrEqualTo($targetStartTime)) {
-            $status = 'a_lheure'; 
+            $status = 'punctual';
             $message = 'Pointage validé. Vous êtes à l\'heure !';
-            $ecart = 0;
         } elseif ($currentTime->greaterThan($targetStartTime) && $currentTime->lessThanOrEqualTo($deadlineTime)) {
-            $status = 'a_lheure'; // Protected inside company flexibility grace guidelines
+            $status = 'punctual'; // Protected inside company flexibility grace guidelines
             $message = 'Pointage validé (Pris en compte dans la marge de tolérance).';
-            $ecart = abs($minuteDifference);
         } else {
-            $status = 'en_retard';
+            $status = 'late';
             $message = 'Pointage enregistré avec retard.';
-            $ecart = abs($minuteDifference);
         }
 
         // 5. Commit record straight into the analytical presences table tracking pipe
-        // Fixed: Mapped all required columns specified in your migration script
         Presence::create([
-            'date_heure_scan' => $now,
-            'statut'          => $status,
-            'ecart_minutes'   => $ecart,
-            'adresse_ip'      => $request->ip(), // Captures the login network origin footprints
-            'user_id'         => $employee->id,
-            'session_id'      => $qrSession->id, // Added to fix your migration constraints
-            'admin_id'        => $qrSession->admin_id, // Added to fix your migration constraints
+            'user_id' => $employee->id,
+            'statut' => $status,
+            'scanned_at' => $now,
         ]);
 
         return redirect()->back()->with([

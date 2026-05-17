@@ -2,6 +2,7 @@ import { createApp, h } from "vue";
 import { createInertiaApp } from "@inertiajs/vue3";
 import { createPinia } from "pinia";
 import MainLayout from "./Layouts/MainLayout.vue";
+import "./echo";
 
 createInertiaApp({
     resolve: (name) => {
