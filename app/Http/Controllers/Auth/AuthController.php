@@ -33,7 +33,7 @@ class AuthController extends Controller
                     ->with('success', 'Bienvenue ' . $user->prenom);
             }
             return redirect()
-                ->route('home')
+                ->route('employe.dashboard')
                 ->with('success', 'Bienvenue ' . $user->prenom);
         }
 

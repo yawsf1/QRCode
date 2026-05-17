@@ -10,7 +10,7 @@
                 Gérez vos équipes<br />
                 avec <span class="accent">simplicité</span>
             </h1>
-
+            <p v-if="user">{{ user.role }}</p>
             <p>
                 Une solution complète pour administrer vos employés, suivre vos
                 départements et piloter votre organisation depuis un seul
@@ -31,10 +31,17 @@
                 />
 
                 <MainLink
-                    v-else
+                    v-else-if="user && user.role === 'admin'"
                     :link="route('admin.dashboard')"
                     text="Dashboard"
                 />
+
+                <MainLink
+                    v-else-if="user && user.role === 'employe'"
+                    :link="route('employe.dashboard')"
+                    text="Dashboard"
+                />
+
                 <SecondaryLink href="/" text="En savoir plus" />
             </div>
 

@@ -72,6 +72,10 @@ function confirmDelete(employeId) {
 function updateEmploye(id) {
     router.get(route("employe.update.form", id));
 }
+
+function showEmploye(id) {
+    router.get(route("employe.show", id));
+}
 </script>
 
 <template>
@@ -140,7 +144,6 @@ function updateEmploye(id) {
                         <th>Téléphone</th>
                         <th>Date création</th>
                         <th>Statut</th>
-
                         <th class="text-right">Actions</th>
                     </tr>
                 </thead>
@@ -174,15 +177,15 @@ function updateEmploye(id) {
                             </span>
                         </td>
 
-                        <td data-label="Actions" class="text-right">
+                        <td data-label="Actions" class="text-right actionsCell">
                             <button
-                                class="tableDeleteBtn"
-                                @click="confirmDelete(employe.id)"
+                                class="tableViewBtn"
+                                @click="showEmploye(employe.id)"
                             >
                                 <span class="material-symbols-rounded"
-                                    >delete</span
+                                    >visibility</span
                                 >
-                                Supprimer
+                                Voir
                             </button>
 
                             <button
@@ -196,13 +199,13 @@ function updateEmploye(id) {
                             </button>
 
                             <button
-                                class="tableViewBtn"
-                                @click="showEmploye(employe.id)"
+                                class="tableDeleteBtn"
+                                @click="confirmDelete(employe.id)"
                             >
                                 <span class="material-symbols-rounded"
-                                    >visibility</span
+                                    >delete</span
                                 >
-                                Voir
+                                Supprimer
                             </button>
                         </td>
                     </tr>
@@ -230,15 +233,15 @@ function updateEmploye(id) {
 </template>
 
 <style scoped lang="scss">
-/* Your SCSS styling block remains completely unchanged and functional here! */
 .containerOfList {
     width: 100%;
     min-height: calc(100vh - 50px);
-    padding: 24px;
+    padding: 40px;
+    background: #fafafa;
+    color: #111111;
     display: flex;
     flex-direction: column;
-    gap: 24px;
-    position: relative;
+    gap: 32px;
 }
 
 .modalOverlay {
@@ -247,68 +250,67 @@ function updateEmploye(id) {
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: rgba(15, 23, 42, 0.6);
-    backdrop-filter: blur(4px);
+    background: rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(2px);
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 200;
+    z-index: 1000;
 }
 
 .modalBox {
     background: #ffffff;
-    padding: 32px;
-    border-radius: 16px;
-    max-width: 400px;
+    padding: 40px;
+    border-radius: 12px;
+    max-width: 440px;
     width: 90%;
-    text-align: center;
-    box-shadow:
-        0 20px 25px -5px rgba(0, 0, 0, 0.1),
-        0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    text-align: left;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    border: 1px solid #111111;
     display: flex;
     flex-direction: column;
-    align-items: center;
 
     .modalIcon {
-        font-size: 48px;
+        font-size: 32px;
         color: #ef4444;
         margin-bottom: 16px;
+        align-self: flex-start;
     }
 
     h3 {
         font-size: 18px;
         font-weight: 700;
-        color: #0f172a;
-        margin: 0 0 8px 0;
+        color: #111111;
+        margin: 0 0 12px 0;
     }
 
     p {
-        font-size: 14px;
-        color: #64748b;
-        line-height: 1.5;
-        margin: 0 0 24px 0;
+        font-size: 13px;
+        color: #555555;
+        line-height: 1.6;
+        margin: 0 0 28px 0;
     }
 }
 
 .modalActions {
     display: flex;
     gap: 12px;
+    justify-content: flex-end;
     width: 100%;
 
     button {
-        flex: 1;
-        padding: 10px 16px;
-        border-radius: 8px;
-        font-size: 14px;
-        font-weight: 500;
+        padding: 10px 20px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 600;
         cursor: pointer;
-        transition: background 0.15s ease;
+        border: none;
+        transition: all 0.15s ease;
     }
 
     .btnConfirm {
         background: #ef4444;
         color: #ffffff;
-        border: none;
 
         &:hover {
             background: #dc2626;
@@ -316,12 +318,11 @@ function updateEmploye(id) {
     }
 
     .btnCancel {
-        background: #f1f5f9;
-        color: #334155;
-        border: 1px solid #e2e8f0;
+        background: #f3f4f6;
+        color: #4b5563;
 
         &:hover {
-            background: #e2e8f0;
+            background: #e5e7eb;
         }
     }
 }
@@ -329,8 +330,11 @@ function updateEmploye(id) {
 .topSection {
     display: flex;
     justify-content: space-between;
+    align-items: center;
     gap: 20px;
     flex-wrap: wrap;
+    border-bottom: 1px solid #eeeeee;
+    padding-bottom: 20px;
 }
 
 .titleSection {
@@ -339,13 +343,16 @@ function updateEmploye(id) {
     gap: 4px;
 
     h2 {
-        font-size: 28px;
+        font-size: 20px;
         font-weight: 700;
+        letter-spacing: -0.3px;
+        margin: 0;
     }
 
     p {
-        color: #64748b;
-        font-size: 14px;
+        color: #666666;
+        font-size: 13px;
+        margin: 0;
     }
 }
 
@@ -360,27 +367,28 @@ function updateEmploye(id) {
     width: 260px;
     padding: 8px 16px;
     border-radius: 6px;
-    border: 1px solid #e2e8f0;
+    border: 1px solid #e5e7eb;
+    background: #ffffff;
     outline: none;
-    transition: 0.2s ease;
-    font-size: 14px;
+    transition: 0.15s ease;
+    font-size: 13px;
+    color: #111111;
 
     &:focus {
-        border-color: #2563eb;
+        border-color: #111111;
     }
 }
 
 .filtering {
     display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
+    gap: 8px;
 }
 
 .tableWrapper {
-    background: white;
-    border-radius: 22px;
+    background: transparent;
+    border-radius: 0;
     overflow-x: auto;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    box-shadow: none;
 }
 
 table {
@@ -389,16 +397,35 @@ table {
     min-width: 900px;
 }
 
-thead {
-    background: #f8fafc;
+th {
+    text-align: left;
+    padding: 16px 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: #999999;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid #eeeeee;
 
-    th {
-        text-align: left;
-        padding: 18px 20px;
+    &.text-right {
+        text-align: right;
+    }
+}
+
+.adminRow {
+    border-bottom: 1px solid #eeeeee;
+    transition: background 0.15s ease;
+
+    &:hover {
+        background: #fdfdfd;
+    }
+
+    td {
+        padding: 16px 12px;
         font-size: 14px;
-        font-weight: 600;
-        color: #64748b;
-        border-bottom: 1px solid #e2e8f0;
+        color: #222222;
+        font-weight: 500;
+        vertical-align: middle;
 
         &.text-right {
             text-align: right;
@@ -406,118 +433,125 @@ thead {
     }
 }
 
-tbody {
-    .adminRow {
-        transition: 0.2s ease;
-
-        &:hover {
-            background: #f8fafc;
-        }
-
-        td {
-            padding: 18px 20px;
-            border-bottom: 1px solid #f1f5f9;
-            font-size: 14px;
-            vertical-align: middle;
-
-            &.text-right {
-                text-align: right;
-            }
-        }
-    }
+.actionsCell {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
 }
 
+.tableViewBtn,
+.tableEditBtn,
 .tableDeleteBtn {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    background: #fee2e2;
-    color: #ef4444;
-    border: 1px solid #fecaca;
-    padding: 8px 14px;
-    border-radius: 8px;
+    padding: 6px 14px;
+    border-radius: 6px;
     font-size: 13px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.15s ease;
+    border: 1px solid transparent;
+    background: transparent;
 
     span {
         font-size: 16px;
     }
+}
+
+.tableViewBtn {
+    border-color: #e5e7eb;
+    color: #475569;
 
     &:hover {
-        background: #ef4444;
-        color: #ffffff;
-        border-color: #ef4444;
+        background: #f1f5f9;
+        color: #1e293b;
+    }
+}
+
+.tableEditBtn {
+    background: #111111;
+    color: #ffffff;
+
+    &:hover {
+        background: #333333;
+    }
+}
+
+.tableDeleteBtn {
+    border-color: #e5e7eb;
+    color: #ef4444;
+
+    &:hover {
+        background: #fef2f2;
+        border-color: #fee2e2;
     }
 }
 
 .status {
-    padding: 6px 14px;
-    border-radius: 999px;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
+    color: #ef4444;
 
     &.active {
-        background: #dcfce7;
-        color: #15803d;
-    }
-
-    &.inactive {
-        background: #fee2e2;
-        color: #b91c1c;
+        color: #10b981;
     }
 }
 
 .emptyState {
     text-align: center;
-    padding: 30px;
-    color: #94a3b8;
+    padding: 40px;
+    color: #999999;
+    font-size: 14px;
 }
 
 .pagination {
     display: flex;
     justify-content: center;
-    gap: 8px;
-    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 16px;
 }
 
 .pagination button {
-    padding: 8px 12px;
-    border: 1px solid #e2e8f0;
+    padding: 6px 12px;
+    border: 1px solid #e5e7eb;
     background: white;
-    border-radius: 8px;
+    border-radius: 6px;
     cursor: pointer;
-    font-size: 14px;
-    transition: 0.2s ease;
-}
+    font-size: 13px;
+    font-weight: 500;
+    color: #4b5563;
+    transition: 0.15s ease;
 
-.pagination button:hover {
-    background: #f8fafc;
-}
+    &:hover {
+        background: #f9fafb;
+        border-color: #d1d5db;
+    }
 
-.pagination button.active {
-    background: #2563eb;
-    color: white;
-    border-color: #2563eb;
-}
+    &.active {
+        background: #111111;
+        color: white;
+        border-color: #111111;
+    }
 
-.pagination button:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
+    &:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
 }
 
 @media (max-width: 768px) {
     .containerOfList {
-        padding: 16px;
+        padding: 20px;
     }
 
     .topSection {
         flex-direction: column;
+        align-items: stretch;
     }
 
     .actionsSection {
-        width: 100%;
         flex-direction: column;
         align-items: stretch;
     }
@@ -527,7 +561,6 @@ tbody {
     }
 
     .filtering {
-        width: 100%;
         justify-content: space-between;
     }
 
@@ -547,31 +580,30 @@ tbody {
     }
 
     .adminRow {
-        padding: 14px;
-        border-bottom: 1px solid #e2e8f0;
+        padding: 16px 0;
     }
 
     td {
         display: flex !important;
         justify-content: space-between;
         align-items: center;
-        padding: 12px 0 !important;
+        padding: 10px 0 !important;
         border: none !important;
-        text-align: left !important;
 
         &::before {
             content: attr(data-label);
+            font-size: 11px;
+            text-transform: uppercase;
             font-weight: 600;
-            color: #64748b;
-        }
-
-        &.text-right {
-            justify-content: space-between;
+            color: #999999;
+            letter-spacing: 0.5px;
         }
     }
 
-    .tableDeleteBtn {
-        width: auto;
+    .actionsCell {
+        justify-content: flex-end;
+        width: 100%;
+        margin-top: 8px;
     }
 }
 </style>

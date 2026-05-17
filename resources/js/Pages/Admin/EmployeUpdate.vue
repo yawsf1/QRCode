@@ -6,17 +6,21 @@ import MainButton from "../../components/Buttons/MainButton.vue";
 import SmallMainLink from "../../components/Links/SmallMainLink.vue";
 import SmallSecondaryLink from "../../components/Links/SmallSecondaryLink.vue";
 
-const form = useForm({
-    nom: "",
-    prenom: "",
-    email: "",
-    departement: "",
-    telephone: "",
+const props = defineProps({
+    employe: Object,
+});
 
-    heure_debut: "",
-    heure_fin: "",
-    jours_ouvres: [],
-    tolerance_retard: "",
+const form = useForm({
+    nom: props.employe.nom || "",
+    prenom: props.employe.prenom || "",
+    email: props.employe.email || "",
+    departement: props.employe.departement || "",
+    telephone: props.employe.telephone || "",
+
+    heure_debut: props.employe.horaire?.heure_debut || "",
+    heure_fin: props.employe.horaire?.heure_fin || "",
+    jours_ouvres: props.employe.horaire?.jours_ouvres || [],
+    tolerance_retard: props.employe.horaire?.tolerance_retard ?? "",
 });
 
 const daysOfWeek = [
@@ -31,17 +35,11 @@ const daysOfWeek = [
 
 const errors = computed(() => usePage().props.errors);
 
-function register() {
-    form.post(route("employe.register"), {
-        onSuccess: () => {
-            form.reset();
-        },
-    });
+function update() {
+    form.put(route("admin.employe.update", props.employe.id));
 }
 
-defineProps({
-    employe: Object,
-});
+console.log(props.employe);
 </script>
 
 <template>
@@ -56,7 +54,7 @@ defineProps({
             <h2 class="title">Modifier d'employé : {{ employe.prenom }}</h2>
             <p class="subtitle">Créer un nouveau compte d'employé</p>
 
-            <form class="form" @submit.prevent="register">
+            <form class="form" @submit.prevent="update">
                 <div class="grid">
                     <div class="field">
                         <label>Nom <span class="required">*</span></label>
@@ -120,34 +118,34 @@ defineProps({
 
                     <div class="field">
                         <label
-                            >Heure de début ({{ employe.horaire.heure_debut }})
-                            <span class="required">*</span></label
-                        >
-                        <input type="time" v-model="form.heure_debut" />
-                        <p v-if="errors.heure_debut" class="error">
-                            {{ errors.heure_debut }}
-                        </p>
-                    </div>
-
-                    <div class="field">
-                        <label
-                            >Heure de fin ({{ employe.horaire.heure_fin }})<span
-                                class="required"
-                                >*</span
-                            ></label
+                            >Heure de fin ({{
+                                employe.horaire?.heure_fin || "—"
+                            }})<span class="required">*</span></label
                         >
                         <input type="time" v-model="form.heure_fin" />
                         <p v-if="errors.heure_fin" class="error">
                             {{ errors.heure_fin }}
                         </p>
                     </div>
-
+                    <div class="field">
+                        <label
+                            >Heure de début ({{
+                                employe.horaire?.heure_debut || "—"
+                            }}) <span class="required">*</span></label
+                        >
+                        <input type="time" v-model="form.heure_debut" />
+                        <p v-if="errors.heure_debut" class="error">
+                            {{ errors.heure_debut }}
+                        </p>
+                    </div>
                     <div class="field full">
                         <label>Tolérance de retard (minutes)</label>
                         <input
                             type="number"
                             v-model="form.tolerance_retard"
-                            :placeholder="employe.horaire.tolerance_retard"
+                            :placeholder="
+                                employe.horaire?.tolerance_retard ?? '0'
+                            "
                             min="0"
                             max="60"
                         />
@@ -166,10 +164,9 @@ defineProps({
                                 :key="day.value"
                                 class="checkboxLabel"
                                 :class="{
-                                    'is-checked':
-                                        employe.horaire.jours_ouvres.includes(
-                                            day.value,
-                                        ),
+                                    'is-checked': form.jours_ouvres.includes(
+                                        day.value,
+                                    ),
                                 }"
                             >
                                 <input
@@ -190,7 +187,11 @@ defineProps({
                 <MainButton
                     type="submit"
                     :disabled="form.processing"
-                    :text="form.processing ? 'Ajout en cours...' : 'Ajouter'"
+                    :text="
+                        form.processing
+                            ? 'Modification en cours...'
+                            : 'Modifier'
+                    "
                 />
             </form>
         </div>

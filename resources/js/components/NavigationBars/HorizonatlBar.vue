@@ -3,6 +3,7 @@ import { Link, useForm, usePage } from "@inertiajs/vue3";
 import MainButton from "../Buttons/MainButton.vue";
 import { computed } from "vue";
 import MainLayout from "../../Layouts/MainLayout.vue";
+import LogoutButton from "../Buttons/LogoutButton.vue";
 
 const form = useForm({});
 const page = usePage();
@@ -19,7 +20,7 @@ function logout() {
                 <Link href="/"> ScanQR </Link>
             </li>
             <li v-if="user" class="navBarItem">
-                <MainButton @click="logout" text="Se déconnecter" />
+                <LogoutButton @click="logout" text="Se déconnecter" />
             </li>
         </ul>
     </div>
@@ -37,6 +38,7 @@ function logout() {
     display: flex;
     justify-content: center;
     align-items: center;
+    z-index: 10000;
 
     .navBar {
         list-style-type: none;

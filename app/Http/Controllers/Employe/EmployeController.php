@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Employe;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Admin\UpdateEmployeRequest;
 use App\Http\Requests\Employe\RegisterRequest as EmployeRegisterRequest;
+use App\Http\Requests\Employe\UpdateRequest;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -60,7 +60,7 @@ class EmployeController extends Controller
         );
     }
 
-    public function update(UpdateEmployeRequest $request, User $user)
+    public function update(UpdateRequest $request, User $user)
     {
         if(!$user->isEmploye()) {
             return back()->with(
@@ -74,10 +74,8 @@ class EmployeController extends Controller
                 'nom' => $data['nom'],
                 'prenom' => $data['prenom'],
                 'email' => $data['email'],
-                'password' => $data['password'],
-                'role' => 'employe',
-                'departement' => $data['departement'],
                 'telephone' => $data['telephone'] ?? null,
+                'departement' => $data['departement'],
                 'est_actif' => $data['est_actif'] ?? true,
                 'admin_id' => Auth::id(),
             ]);
@@ -92,7 +90,9 @@ class EmployeController extends Controller
             return $user;
         });
         
-        return back()->with(
+        return redirect()
+            ->route('employe.list')
+            ->with(
             'success',
             'Employé'. $user->prenom .'mis à jour'
         );

@@ -14,6 +14,10 @@ const props = defineProps({
         type: Array,
         required: true,
     },
+    suffix: {
+        type: String,
+        default: "employés",
+    },
 });
 
 const pieColors = ["#4f46e5", "#06b6d4", "#10b981", "#f59e0b", "#ec4899"];
@@ -32,7 +36,7 @@ const chartData = computed(() => ({
     ],
 }));
 
-const chartOptions = {
+const chartOptions = computed(() => ({
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
@@ -79,12 +83,12 @@ const chartOptions = {
                     );
                     const percentage =
                         total > 0 ? ((value / total) * 100).toFixed(1) : 0;
-                    return ` ${context.label}: ${value} employés (${percentage}%)`;
+                    return ` ${context.label}: ${value} ${props.suffix} (${percentage}%)`;
                 },
             },
         },
     },
-};
+}));
 </script>
 
 <template>

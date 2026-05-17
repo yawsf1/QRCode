@@ -4,11 +4,10 @@ use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Employe\EmployeController;
 use App\Http\Controllers\Routing\RoutingController;
 use App\Http\Controllers\Admin\AdminController;
+use App\Http\Controllers\Admin\QrSessionController;
+use App\Http\Controllers\Employe\CheckInController;
 use Illuminate\Support\Facades\Route;
-
-
-
-
+use Inertia\Inertia;
 
 Route::middleware(['auth', 'role:super_admin'])->group(function () {
 
@@ -34,29 +33,29 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
 
     
     Route::put('/employe/{user}', [EmployeController::class, 'update'])
-        ->name('employe.update');
+        ->name('admin.employe.update');
 
     Route::delete('/account', [AdminController::class, 'deleteOwnAccount'])
         ->name('admin.account.delete');
     
-
     Route::post('/employe', [EmployeController::class, 'register'])
-        ->name('employe.register');
-
+        ->name('admin.employe.register');
         
     Route::delete('/employe/{user}', [EmployeController::class, 'delete'])
-        ->name('employe.delete');
+        ->name('admin.employe.delete');
 
-
-
-        
-
-
+    Route::get('/admin/qr-dashboard', [QrSessionController::class, 'show'])->name('admin.qr.show');
+    Route::post('/admin/qr-refresh', [QrSessionController::class, 'refresh'])->name('admin.qr.refresh');
 });
 
 
 Route::middleware(['auth', 'role:employe'])->group(function () {
-    
+    Route::get('/mon-espace/dashboard', [RoutingController::class, 'Employedashboard'])->name('employe.dashboard');
+    Route::get('/mon-espace/scan', function () {
+        return Inertia::render('Employe/Scanner');
+    })->name('employe.scan.form');
+
+    Route::post('/mon-espace/check-in', [CheckInController::class, 'store'])->name('employe.checkin');
 });
 
 

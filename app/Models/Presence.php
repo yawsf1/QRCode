@@ -14,7 +14,7 @@ class Presence extends Model
         'ecart_minutes',
         'adresse_ip',
         'user_id',
-        'session_qr_id',
+        'session_id',
         'admin_id',
     ];
 
@@ -30,6 +30,6 @@ class Presence extends Model
 
     public function sessionQr()
     {
-        return $this->belongsTo(SessionQr::class);
+        return $this->belongsTo(SessionQR::class, 'session_id');
     }
 }

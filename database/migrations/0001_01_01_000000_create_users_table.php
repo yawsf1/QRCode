@@ -22,7 +22,10 @@ return new class extends Migration
             $table->string('departement')->nullable();
             $table->string('telephone')->nullable();
             $table->boolean('est_actif')->default(true);
-            $table->foreignId('admin_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('admin_id')
+                    ->nullable()
+                    ->constrained('users')
+                    ->onDelete('set null');
             $table->rememberToken();
             $table->timestamps();
         });

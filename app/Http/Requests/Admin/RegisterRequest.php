@@ -35,7 +35,7 @@ class RegisterRequest extends FormRequest
     public function messages()
     {
         return [
-                        'departement.required' => 'Le nom de l\'entreprise est obligatoire.',
+            'departement.required' => 'Le nom de l\'entreprise est obligatoire.',
             'departement.max' => 'Le nom de l\'entreprise ne doit pas dépasser 100 caractères.',
             'departement.string' => 'Le nom de l\'entreprise doit contenir uniquement des lettres et des espaces.',
         ];

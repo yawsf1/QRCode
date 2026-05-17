@@ -33,7 +33,7 @@ const daysOfWeek = [
 const errors = computed(() => usePage().props.errors);
 
 function register() {
-    form.post(route("employe.register"), {
+    form.post(route("admin.employe.register"), {
         onSuccess: () => {
             form.reset();
         },
