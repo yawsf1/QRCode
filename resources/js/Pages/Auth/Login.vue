@@ -1,6 +1,7 @@
 <script setup>
 import { useForm, usePage } from "@inertiajs/vue3";
 import { computed } from "vue";
+import AppBrand from "../../components/Layout/AppBrand.vue";
 import LoginLayout from "../../Layouts/LoginLayout.vue";
 import { route } from "ziggy-js";
 
@@ -10,6 +11,7 @@ const errors = computed(() => page.props.errors);
 const form = useForm({
     email: "",
     password: "",
+    remember: false,
 });
 
 function login() {
@@ -23,16 +25,16 @@ defineOptions({
 
 <template>
     <div class="loginPage">
-        <!-- Background -->
+        
         <div class="bg">
             <div class="gridPattern"></div>
             <div class="glowOrb orb1"></div>
             <div class="glowOrb orb2"></div>
         </div>
 
-        <!-- Card -->
+        
         <div class="card">
-            <!-- Back link -->
+            
             <a :href="route('home')" class="backLink">
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                     <path
@@ -46,16 +48,13 @@ defineOptions({
                 Accueil
             </a>
 
-            <!-- Brand -->
-            <div class="brand">
-                <div class="logoMark">
-                    <span class="material-symbols-rounded">qr_code_2</span>
-                </div>
-                <span class="logoText">QR<span class="thin">Coded</span></span>
-            </div>
+            
+            <AppBrand class="loginBrand" />
 
             <h1 class="title">Connexion</h1>
-            <p class="subtitle">Accédez à votre espace de gestion</p>
+            <p class="subtitle">
+                Compte administrateur, employé ou super administrateur
+            </p>
 
             <form class="form" @submit.prevent="login">
                 <div class="field">
@@ -96,6 +95,19 @@ defineOptions({
                         {{ errors.password }}
                     </p>
                 </div>
+
+                <label class="rememberToggle" for="remember">
+                    <input
+                        id="remember"
+                        type="checkbox"
+                        class="rememberInput"
+                        v-model="form.remember"
+                    />
+                    <span class="rememberTrack" aria-hidden="true">
+                        <span class="rememberThumb"></span>
+                    </span>
+                    <span class="rememberText">Se souvenir de moi</span>
+                </label>
 
                 <button
                     class="submitBtn"
@@ -147,7 +159,6 @@ defineOptions({
     box-sizing: border-box;
 }
 
-/* Background effects */
 .bg {
     position: absolute;
     inset: 0;
@@ -190,7 +201,6 @@ defineOptions({
     }
 }
 
-/* Card */
 .card {
     position: relative;
     width: 100%;
@@ -205,7 +215,6 @@ defineOptions({
         0 0 60px rgba(79, 124, 255, 0.06);
 }
 
-/* Back link */
 .backLink {
     display: inline-flex;
     align-items: center;
@@ -221,40 +230,10 @@ defineOptions({
     }
 }
 
-/* Brand */
-.brand {
-    display: flex;
-    align-items: center;
-    gap: 10px;
+.loginBrand {
     margin-bottom: 28px;
-
-    .logoMark {
-        width: 34px;
-        height: 34px;
-        background: var(--accent);
-        border-radius: 9px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        span {
-            font-size: 18px;
-            color: #fff;
-        }
-    }
-
-    .logoText {
-        font-size: 17px;
-        font-weight: 700;
-        letter-spacing: -0.3px;
-        color: var(--text-primary);
-    }
-    .thin {
-        font-weight: 300;
-        color: var(--text-secondary);
-    }
 }
 
-/* Heading */
 .title {
     font-size: 24px;
     font-weight: 800;
@@ -270,7 +249,6 @@ defineOptions({
     line-height: 1.5;
 }
 
-/* Form */
 .form {
     display: flex;
     flex-direction: column;
@@ -339,7 +317,7 @@ defineOptions({
             font-weight: 400;
         }
 
-        /* hide browser autofill yellow */
+        
         &:-webkit-autofill,
         &:-webkit-autofill:hover,
         &:-webkit-autofill:focus {
@@ -348,6 +326,91 @@ defineOptions({
             transition: background-color 5000s ease-in-out 0s;
         }
     }
+}
+
+.rememberToggle {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    user-select: none;
+    margin-top: 2px;
+}
+
+.rememberInput {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.rememberTrack {
+    position: relative;
+    width: 44px;
+    height: 24px;
+    flex-shrink: 0;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.rememberThumb {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+    transition:
+        transform 0.22s cubic-bezier(0.4, 0, 0.2, 1),
+        background 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.rememberText {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    line-height: 1.3;
+}
+
+.rememberToggle:hover .rememberTrack {
+    border-color: var(--border-strong);
+}
+
+.rememberToggle:hover .rememberText {
+    color: var(--text-primary);
+}
+
+.rememberInput:focus-visible + .rememberTrack {
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 3px rgba(79, 124, 255, 0.12);
+}
+
+.rememberInput:checked + .rememberTrack {
+    background: var(--accent-dim);
+    border-color: rgba(79, 124, 255, 0.45);
+}
+
+.rememberInput:checked + .rememberTrack .rememberThumb {
+    transform: translateX(20px);
+    background: var(--accent);
+    box-shadow: 0 2px 8px rgba(79, 124, 255, 0.45);
+}
+
+.rememberInput:checked ~ .rememberText {
+    color: var(--text-primary);
 }
 
 .error {
@@ -373,7 +436,6 @@ defineOptions({
     }
 }
 
-/* Submit button */
 .submitBtn {
     width: 100%;
     height: 46px;
@@ -432,7 +494,6 @@ defineOptions({
     }
 }
 
-/* Responsive */
 @media (max-width: 480px) {
     .card {
         padding: 28px 20px;

@@ -3,6 +3,11 @@ import { onMounted, onUnmounted } from "vue";
 import { router } from "@inertiajs/vue3";
 import { route } from "ziggy-js";
 import QRCodeVue3 from "qrcode-vue3";
+import AdminSidebar from "../../components/Layout/AdminSidebar.vue";
+import DashboardMobileNav from "../../components/Layout/DashboardMobileNav.vue";
+import { useUiStore } from "../../stores/ui";
+
+const ui = useUiStore();
 
 const props = defineProps({
     qrToken: String,
@@ -26,51 +31,33 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-    if (refreshInterval) clearInterval(refreshInterval);
+    if (refreshInterval) {
+        clearInterval(refreshInterval);
+    }
 });
 </script>
 
 <template>
     <div class="dashboard">
-        <aside class="sidebar">
-            <p class="sidebarLabel">Super admin</p>
+        <div
+            v-if="ui.mobileSidebarOpen"
+            class="sidebarBackdrop"
+            @click="ui.closeMobileSidebar()"
+        ></div>
 
-            <button
-                class="navBtn"
-                @click="router.visit(route('admin.dashboard'))"
-            >
-                <span class="material-symbols-rounded">dashboard</span>
-                Tableau de bord
-            </button>
-
-            <button
-                class="navBtn"
-                @click="router.visit(route('employe.register.form'))"
-            >
-                <span class="material-symbols-rounded">person_add</span>
-                Ajouter un employé
-            </button>
-
-            <button class="navBtn" @click="router.visit(route('employe.list'))">
-                <span class="material-symbols-rounded">group</span>
-                Afficher les employés
-            </button>
-
-            <button
-                class="navBtn active"
-                @click="router.visit(route('admin.qr.show'))"
-            >
-                <span class="material-symbols-rounded">qr_code_scanner</span>
-                Générer Borne QR
-            </button>
-        </aside>
+        <AdminSidebar active="qr" :open="ui.mobileSidebarOpen" />
 
         <main class="content">
             <div class="pageHeader">
-                <h1 class="pageTitle">Borne de Pointage</h1>
-                <p class="pageSubtitle">
-                    Génération en direct des accès sécurisés de présence
-                </p>
+                <div class="headerRow">
+                    <div>
+                        <h1 class="pageTitle">Borne de Pointage</h1>
+                        <p class="pageSubtitle">
+                            Génération en direct des accès sécurisés de présence
+                        </p>
+                    </div>
+                    <DashboardMobileNav />
+                </div>
             </div>
 
             <div class="qr-dashboard-wrapper">
@@ -97,10 +84,11 @@ onUnmounted(() => {
                         <div class="badge-row">
                             <span class="status-badge">● Borne en Direct</span>
                         </div>
-                        <h2>Scanner pour pointer</h2>
+                        <h2>Scanner pour pointer l'arrivée</h2>
                         <p class="subtitle">
-                            Présentez votre application mobile face à l'écran
-                            pour enregistrer votre présence instantanément.
+                            Les employés ouvrent QRCoded sur leur smartphone et
+                            scannent ce code (un pointage par jour). Le QR est
+                            renouvelé automatiquement.
                         </p>
 
                         <div class="security-footer">
@@ -108,139 +96,79 @@ onUnmounted(() => {
                                 >refresh</span
                             >
                             <small
-                                >Actualisation automatique active (12s)</small
+                                >Actualisation automatique toutes les 12 s (code valide ~15 s)</small
                             >
                         </div>
                     </div>
                 </div>
             </div>
-
-            <slot />
         </main>
     </div>
 </template>
 
 <style scoped lang="scss">
-/* Core Master Dashboard Rules */
+@import url("https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&display=swap");
+
 .dashboard {
+    font-family: "Sora", sans-serif;
     display: flex;
     width: 100%;
-    flex-grow: 1;
-    min-height: calc(100vh - 60px);
+    min-height: 100vh;
     background: #0a0a0f;
+    color: #f0f0f8;
 }
 
-.sidebar {
-    width: 220px;
-    flex-shrink: 0;
-    background: #111118;
-    border-right: 1px solid rgba(255, 255, 255, 0.06);
-    display: flex;
-    flex-direction: column;
-    padding: 24px 12px;
-    gap: 4px;
-}
-
-.sidebarLabel {
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: #55556a;
-    padding: 0 8px 12px;
-    margin: 0;
-}
-
-.navBtn {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 9px 12px;
-    border-radius: 10px;
-    border: none;
-    background: transparent;
-    font-size: 13px;
-    font-weight: 500;
-    color: #8888aa;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    text-align: left;
-    width: 100%;
-    font-family: inherit;
-
-    span {
-        font-size: 18px;
-        color: #55556a;
-    }
-
-    &:hover {
-        background: #16161f;
-        color: #f0f0f8;
-        span {
-            color: #8888aa;
-        }
-    }
-
-    &.active {
-        background: rgba(255, 255, 255, 0.08);
-        color: #f0f0f8;
-        span {
-            color: #4f7cff;
-        }
-    }
+.sidebarBackdrop {
+    display: none;
 }
 
 .content {
     flex: 1;
-    background: #0a0a0f;
-    padding: 32px;
+    padding: 32px 40px;
     display: flex;
     flex-direction: column;
     gap: 24px;
-    overflow-y: auto;
 }
 
 .pageHeader {
+    margin-bottom: 8px;
+}
+
+.headerRow {
     display: flex;
-    flex-direction: column;
-    gap: 4px;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
 }
 
 .pageTitle {
     font-size: 22px;
-    font-weight: 700;
-    color: #f0f0f8;
-    margin: 0;
+    font-weight: 800;
+    margin: 0 0 4px;
 }
 
 .pageSubtitle {
-    font-size: 14px;
+    font-size: 13px;
     color: #8888aa;
     margin: 0;
 }
 
-/* WIDER THAN TALLER QR CARD ENGINEERING */
 .qr-dashboard-wrapper {
     display: flex;
     justify-content: center;
     align-items: center;
-    flex-grow: 1;
-    background: #0a0a0f;
-    width: 100%;
+    flex: 1;
 }
 
 .qr-card.wide-format {
     display: flex;
-    flex-direction: row;
-    align-items: center;
+    gap: 40px;
     background: #111118;
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: 24px;
-    padding: 32px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 40px;
+    max-width: 800px;
     width: 100%;
-    max-width: 680px;
-    gap: 36px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
 }
 
 .qr-graphic-side {
@@ -248,47 +176,35 @@ onUnmounted(() => {
 }
 
 .qr-viewport {
-    background: #ffffff; /* Keeping the immediate frame white for pristine QR rendering scanner capability */
-    padding: 12px;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 16px;
-    display: flex;
+    background: #fff;
+    padding: 16px;
+    border-radius: 12px;
 }
 
 .qr-info-side {
-    flex: 1;
     display: flex;
     flex-direction: column;
-    text-align: left;
-}
+    justify-content: center;
+    gap: 12px;
 
-.badge-row {
-    margin-bottom: 12px;
+    h2 {
+        font-size: 20px;
+        font-weight: 700;
+        margin: 0;
+    }
+
+    .subtitle {
+        color: #8888aa;
+        font-size: 14px;
+        line-height: 1.5;
+        margin: 0;
+    }
 }
 
 .status-badge {
-    font-size: 11px;
+    color: #22c97a;
+    font-size: 12px;
     font-weight: 700;
-    color: #10b981;
-    text-transform: uppercase;
-    background: rgba(16, 185, 129, 0.12);
-    padding: 4px 10px;
-    border-radius: 20px;
-    letter-spacing: 0.05em;
-}
-
-h2 {
-    font-size: 22px;
-    font-weight: 700;
-    color: #f0f0f8;
-    margin: 0 0 8px 0;
-}
-
-.subtitle {
-    font-size: 14px;
-    color: #8888aa;
-    line-height: 1.5;
-    margin: 0 0 24px 0;
 }
 
 .security-footer {
@@ -296,63 +212,59 @@ h2 {
     align-items: center;
     gap: 8px;
     color: #55556a;
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
-    padding-top: 16px;
+    margin-top: 8px;
 
     small {
         font-size: 12px;
-        font-weight: 500;
-    }
-    span {
-        font-size: 16px;
     }
 }
 
+.animate-spin {
+    animation: spin 2s linear infinite;
+}
+
 @keyframes spin {
-    from {
-        transform: rotate(0deg);
-    }
     to {
         transform: rotate(360deg);
     }
 }
-.animate-spin {
-    animation: spin 3s linear infinite;
-}
 
-/* Responsive Adaptability Layout Handlers */
 @media (max-width: 768px) {
-    .dashboard {
-        flex-direction: column;
-        min-height: auto;
+    .sidebarBackdrop {
+        display: block;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.55);
+        z-index: 40;
     }
-    .sidebar {
-        width: 100%;
-        flex-direction: row;
-        overflow-x: auto;
-        padding: 12px;
-        border-right: none;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+
+    :deep(.adminSidebar) {
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        width: min(280px, 85vw);
+        z-index: 50;
+        transform: translateX(-100%);
+        transition: transform 0.25s ease;
+
+        &.open {
+            transform: translateX(0);
+        }
     }
-    .sidebarLabel {
-        display: none;
-    }
+
     .content {
         padding: 20px 16px;
     }
+
     .qr-card.wide-format {
         flex-direction: column;
-        text-align: center;
         padding: 24px;
-        gap: 20px;
+        align-items: center;
+        text-align: center;
 
         .qr-info-side {
-            text-align: center;
             align-items: center;
-        }
-        .security-footer {
-            justify-content: center;
-            width: 100%;
         }
     }
 }

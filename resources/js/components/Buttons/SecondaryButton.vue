@@ -27,12 +27,12 @@ defineProps({
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    height: 42px; /* Perfectly matches MainButton height for row symmetry */
+    height: 42px; 
     width: 100%;
     padding: 0 24px;
     background: var(--surface-tint);
     color: var(--text);
-    border-radius: 12px; /* Inline with the form input curves */
+    border-radius: 12px; 
     border: 1px solid var(--border);
     cursor: pointer;
     font-family: "Sora", sans-serif;

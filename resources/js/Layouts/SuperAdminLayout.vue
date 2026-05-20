@@ -6,7 +6,7 @@ import { router } from "@inertiajs/vue3";
 <template>
     <div class="dashboard">
         <aside class="sidebar">
-            <p class="sidebarLabel">Super admin</p>
+            <p class="sidebarLabel">Super administrateur</p>
 
             <button
                 class="navBtn"

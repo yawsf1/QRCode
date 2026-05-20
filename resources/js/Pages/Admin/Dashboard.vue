@@ -2,11 +2,17 @@
 import { route } from "ziggy-js";
 import { router, usePage } from "@inertiajs/vue3";
 import LineChart from "../../components/Charts/LineChart.vue";
-import PieChart from "../../components/Charts/PieChart.vue";
 import MainLink from "../../components/Links/MainLink.vue";
-import { computed } from "vue";
+import NotificationBell from "../../components/Notifications/NotificationBell.vue";
+import AdminSidebar from "../../components/Layout/AdminSidebar.vue";
+import DashboardMobileNav from "../../components/Layout/DashboardMobileNav.vue";
+import { useUiStore } from "../../stores/ui";
+import { computed, ref, onMounted, onUnmounted, watch } from "vue";
 
-// 1. Accept everything passed down from our Laravel Admin Dashboard controller
+const ui = useUiStore();
+
+const page = usePage();
+
 const props = defineProps({
     totalEmployees: { type: Number, default: 0 },
     months: { type: Array, default: () => [] },
@@ -27,49 +33,233 @@ const props = defineProps({
     worstEmployees: { type: Array, default: () => [] },
 });
 
-// 2. Map the structural datasets cleanly using our brand accent configuration tokens
+const liveMetrics = ref({ ...props.companyMetrics });
+const liveChartData = ref({
+    punctuals: [...(props.chartData.punctuals || [])],
+    lates: [...(props.chartData.lates || [])],
+    earlies: [...(props.chartData.earlies || [])],
+    absents: [...(props.chartData.absents || [])],
+});
+const liveTopEmployees = ref(props.topEmployees.map((e) => ({ ...e })));
+const liveWorstEmployees = ref(props.worstEmployees.map((e) => ({ ...e })));
+const liveRecentScans = ref([]);
+
+const syncFromServer = () => {
+    liveMetrics.value = { ...props.companyMetrics };
+    liveChartData.value = {
+        punctuals: [...(props.chartData?.punctuals || [])],
+        lates: [...(props.chartData?.lates || [])],
+        earlies: [...(props.chartData?.earlies || [])],
+        absents: [...(props.chartData?.absents || [])],
+    };
+    liveTopEmployees.value = (props.topEmployees || []).map((e) => ({ ...e }));
+    liveWorstEmployees.value = (props.worstEmployees || []).map((e) => ({ ...e }));
+};
+
+watch(
+    () => [
+        props.chartData,
+        props.companyMetrics,
+        props.topEmployees,
+        props.worstEmployees,
+    ],
+    () => syncFromServer(),
+    { deep: true },
+);
+
+const sumArray = (arr) => (arr || []).reduce((acc, curr) => acc + curr, 0);
+
+const recalculateMetrics = () => {
+    const punctCount =
+        sumArray(liveChartData.value.punctuals) +
+        sumArray(liveChartData.value.earlies);
+    const lateCount = sumArray(liveChartData.value.lates);
+    const absentCount = sumArray(liveChartData.value.absents);
+    const total = punctCount + lateCount + absentCount;
+
+    if (total <= 0) return;
+
+    liveMetrics.value.presenceRate = parseFloat(
+        (((total - absentCount) / total) * 100).toFixed(1),
+    );
+
+    if (total - absentCount > 0) {
+        liveMetrics.value.punctualityRate = parseFloat(
+            ((punctCount / (total - absentCount)) * 100).toFixed(1),
+        );
+    }
+
+    liveMetrics.value.productivityScore = parseFloat(
+        (
+            liveMetrics.value.presenceRate * 0.6 +
+            liveMetrics.value.punctualityRate * 0.4
+        ).toFixed(1),
+    );
+};
+
+const upsertTopEmployee = (scan) => {
+    if (!["a_lheure", "en_avance", "punctual"].includes(scan.statut)) return;
+
+    const user = scan.user || {};
+    let entry = liveTopEmployees.value.find((e) => e.id === scan.user_id);
+
+    if (entry) {
+        entry.punctual_count = (entry.punctual_count || 0) + 1;
+    } else {
+        entry = {
+            id: scan.user_id,
+            nom: user.nom || "",
+            prenom: user.prenom || "",
+            punctual_count: 1,
+        };
+        liveTopEmployees.value.push(entry);
+    }
+
+    liveTopEmployees.value.sort(
+        (a, b) => (b.punctual_count || 0) - (a.punctual_count || 0),
+    );
+    liveTopEmployees.value = liveTopEmployees.value.slice(0, 5);
+};
+
+const upsertWorstEmployee = (scan, field) => {
+    const user = scan.user || {};
+    let entry = liveWorstEmployees.value.find((e) => e.id === scan.user_id);
+
+    if (entry) {
+        entry[field] = (entry[field] || 0) + 1;
+    } else {
+        entry = {
+            id: scan.user_id,
+            nom: user.nom || "",
+            prenom: user.prenom || "",
+            late_count: field === "late_count" ? 1 : 0,
+            absent_count: field === "absent_count" ? 1 : 0,
+        };
+        liveWorstEmployees.value.push(entry);
+    }
+
+    liveWorstEmployees.value.sort(
+        (a, b) =>
+            (b.late_count || 0) +
+            (b.absent_count || 0) * 2 -
+            ((a.late_count || 0) + (a.absent_count || 0) * 2),
+    );
+    liveWorstEmployees.value = liveWorstEmployees.value.slice(0, 5);
+};
+
+const statutLabel = (statut) => {
+    if (statut === "a_lheure" || statut === "punctual") return "À l'heure";
+    if (statut === "en_avance") return "En avance";
+    if (statut === "en_retard" || statut === "late") return "En retard";
+    if (statut === "absent") return "Absent";
+    return statut;
+};
+
+onMounted(() => {
+    syncFromServer();
+
+    const adminId = page.props?.auth?.user?.id;
+
+    window.Echo.channel("attendance-channel").listen(".checked-in", (e) => {
+        const scan = e.presence;
+
+        if (Number(scan.admin_id) !== Number(adminId)) return;
+
+        const idx = 5;
+
+        if (scan.statut === "a_lheure" || scan.statut === "punctual") {
+            liveChartData.value.punctuals[idx]++;
+        } else if (scan.statut === "en_retard" || scan.statut === "late") {
+            liveChartData.value.lates[idx]++;
+            liveMetrics.value.toleranceImpact = parseFloat(
+                (
+                    liveMetrics.value.toleranceImpact +
+                    (scan.ecart_minutes || 0) / 60
+                ).toFixed(1),
+            );
+            upsertWorstEmployee(scan, "late_count");
+        } else if (scan.statut === "en_avance") {
+            liveChartData.value.earlies[idx]++;
+            upsertTopEmployee(scan);
+        } else if (scan.statut === "absent") {
+            liveChartData.value.absents[idx]++;
+            upsertWorstEmployee(scan, "absent_count");
+        }
+
+        if (scan.statut === "a_lheure" || scan.statut === "punctual") {
+            upsertTopEmployee(scan);
+        }
+
+        recalculateMetrics();
+
+        const user = scan.user || {};
+        liveRecentScans.value.unshift({
+            id: scan.id,
+            nom: user.nom || "",
+            prenom: user.prenom || "",
+            statut: scan.statut,
+            time: new Date(scan.date_heure_scan).toLocaleTimeString("fr-FR", {
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+            }),
+        });
+
+        if (liveRecentScans.value.length > 8) {
+            liveRecentScans.value.pop();
+        }
+
+        router.reload({
+            only: [
+                "chartData",
+                "companyMetrics",
+                "topEmployees",
+                "worstEmployees",
+                "totalEmployees",
+                "months",
+                "notifications",
+            ],
+            preserveScroll: true,
+        });
+    });
+});
+
+onUnmounted(() => {
+    window.Echo.leaveChannel("attendance-channel");
+});
+
 const lineChartDatasets = computed(() => [
     {
         label: "À l'heure",
-        data: props.chartData.punctuals || [],
-        color: "#4f7cff", // Core Brand Accent Blue
+        data: liveChartData.value.punctuals || [],
+        color: "#4f7cff",
     },
     {
         label: "En Retard",
-        data: props.chartData.lates || [],
-        color: "#eab308", // Amber Warning
+        data: liveChartData.value.lates || [],
+        color: "#eab308",
     },
     {
-        label: "Départs Anticipés",
-        data: props.chartData.earlies || [],
-        color: "#a78bfa", // Purple Highlight
+        label: "En avance",
+        data: liveChartData.value.earlies || [],
+        color: "#a78bfa",
     },
     {
         label: "Absents",
-        data: props.chartData.absents || [],
-        color: "#ff6b6b", // Coral Crimson Red
+        data: liveChartData.value.absents || [],
+        color: "#ff6b6b",
     },
 ]);
 
-// 3. Simple aggregate computations for the high-end counter displays
-const aggregatePunctuals = computed(() => {
-    return (props.chartData.punctuals || []).reduce(
-        (acc, curr) => acc + curr,
-        0,
-    );
-});
+const aggregatePunctuals = computed(() =>
+    sumArray(liveChartData.value.punctuals) + sumArray(liveChartData.value.earlies),
+);
 
-const aggregateIncidents = computed(() => {
-    const lates = (props.chartData.lates || []).reduce(
-        (acc, curr) => acc + curr,
-        0,
-    );
-    const absents = (props.chartData.absents || []).reduce(
-        (acc, curr) => acc + curr,
-        0,
-    );
-    return lates + absents;
-});
+const aggregateIncidents = computed(
+    () =>
+        sumArray(liveChartData.value.lates) +
+        sumArray(liveChartData.value.absents),
+);
 </script>
 
 <template>
@@ -80,45 +270,16 @@ const aggregateIncidents = computed(() => {
             <div class="glowOrb orb2"></div>
         </div>
 
-        <aside class="sidebar">
-            <div class="brand">
-                <div class="logoMark">
-                    <span class="material-symbols-rounded">qr_code_2</span>
-                </div>
-                <span class="logoText">QR<span class="thin">Coded</span></span>
-            </div>
+        <div
+            v-if="ui.mobileSidebarOpen"
+            class="sidebarBackdrop"
+            @click="ui.closeMobileSidebar()"
+        ></div>
 
-            <p class="sidebarLabel">Super admin</p>
-
-            <button
-                class="navBtn active"
-                @click="router.visit(route('admin.dashboard'))"
-            >
-                <span class="material-symbols-rounded">dashboard</span>
-                Tableau de bord
-            </button>
-
-            <button
-                class="navBtn"
-                @click="router.visit(route('employe.register.form'))"
-            >
-                <span class="material-symbols-rounded">person_add</span>
-                Ajouter un employé
-            </button>
-
-            <button class="navBtn" @click="router.visit(route('employe.list'))">
-                <span class="material-symbols-rounded">group</span>
-                Afficher les employés
-            </button>
-            <button
-                class="navBtn"
-                @click="router.get(route('admin.qr.show'))"
-                :class="{ active: route().current('admin.qr.show') }"
-            >
-                <span class="material-symbols-rounded">qr_code_scanner</span>
-                Générer Borne QR
-            </button>
-        </aside>
+        <AdminSidebar
+            active="dashboard"
+            :open="ui.mobileSidebarOpen"
+        />
 
         <main class="content">
             <div class="pageHeader">
@@ -129,10 +290,14 @@ const aggregateIncidents = computed(() => {
                             {{ totalEmployees }} employé(s) sous votre direction
                         </p>
                     </div>
-                    <MainLink
-                        :link="route('employe.register.form')"
-                        text="Ajouter un employé"
-                    />
+                    <div class="headerActions">
+                        <NotificationBell />
+                        <DashboardMobileNav />
+                        <MainLink
+                            :link="route('employe.register.form')"
+                            text="Ajouter un employé"
+                        />
+                    </div>
                 </div>
             </div>
 
@@ -140,7 +305,7 @@ const aggregateIncidents = computed(() => {
                 <div class="typoMetricWidget">
                     <div class="mainDisplay">
                         <span class="metricValue">
-                            {{ companyMetrics?.productivityScore ?? 0
+                            {{ liveMetrics.productivityScore ?? 0
                             }}<em class="unit">%</em>
                         </span>
                         <span class="metricLabel">Indice de Productivité</span>
@@ -149,13 +314,13 @@ const aggregateIncidents = computed(() => {
                         <span
                             class="trendBadge"
                             :class="
-                                (companyMetrics?.productivityScore ?? 0) >= 85
+                                (liveMetrics.productivityScore ?? 0) >= 85
                                     ? 'up'
                                     : 'down'
                             "
                         >
                             {{
-                                (companyMetrics?.productivityScore ?? 0) >= 85
+                                (liveMetrics.productivityScore ?? 0) >= 85
                                     ? "▲ Stable"
                                     : "▼ Critique"
                             }}
@@ -167,7 +332,7 @@ const aggregateIncidents = computed(() => {
                 <div class="typoMetricWidget">
                     <div class="mainDisplay">
                         <span class="metricValue">
-                            {{ companyMetrics?.presenceRate ?? 0
+                            {{ liveMetrics.presenceRate ?? 0
                             }}<em class="unit">%</em>
                         </span>
                         <span class="metricLabel">Taux de Présence</span>
@@ -181,7 +346,7 @@ const aggregateIncidents = computed(() => {
                 <div class="typoMetricWidget">
                     <div class="mainDisplay">
                         <span class="metricValue">
-                            {{ companyMetrics?.punctualityRate ?? 0
+                            {{ liveMetrics.punctualityRate ?? 0
                             }}<em class="unit">%</em>
                         </span>
                         <span class="metricLabel">Taux de Ponctualité</span>
@@ -190,8 +355,31 @@ const aggregateIncidents = computed(() => {
                         <span class="trendBadge textAccent">i Info</span>
                         <span class="contextLabel">
                             Tolérance:
-                            {{ companyMetrics?.toleranceImpact ?? 0 }}h
+                            {{ liveMetrics.toleranceImpact ?? 0 }}h
                         </span>
+                    </div>
+                </div>
+            </section>
+
+            <section v-if="liveRecentScans.length" class="liveFeedSection">
+                <div class="liveFeedHeader">
+                    <span class="material-symbols-rounded">sensors</span>
+                    <h3>Pointages en direct</h3>
+                    <span class="livePulse">Live</span>
+                </div>
+                <div class="liveFeedList">
+                    <div
+                        v-for="scan in liveRecentScans"
+                        :key="scan.id"
+                        class="liveFeedItem"
+                    >
+                        <span class="liveFeedName"
+                            >{{ scan.prenom }} {{ scan.nom }}</span
+                        >
+                        <span class="liveFeedStatut" :class="scan.statut">{{
+                            statutLabel(scan.statut)
+                        }}</span>
+                        <span class="liveFeedTime">{{ scan.time }}</span>
                     </div>
                 </div>
             </section>
@@ -200,7 +388,7 @@ const aggregateIncidents = computed(() => {
                 <div class="chartCard line-card">
                     <div class="chartHeader">
                         <div class="meta">
-                            <span class="badge">Rapport Annuel Global</span>
+                            <span class="badge">6 derniers mois</span>
                             <h2 class="cardTitle">
                                 Analyse Chronologique des Présences
                             </h2>
@@ -249,7 +437,7 @@ const aggregateIncidents = computed(() => {
                             </h4>
                             <div class="rankList">
                                 <div
-                                    v-for="(emp, index) in topEmployees"
+                                    v-for="(emp, index) in liveTopEmployees"
                                     :key="emp.id"
                                     class="rankRow"
                                 >
@@ -264,7 +452,7 @@ const aggregateIncidents = computed(() => {
                                     </span>
                                 </div>
                                 <p
-                                    v-if="topEmployees.length === 0"
+                                    v-if="liveTopEmployees.length === 0"
                                     class="emptyLabel"
                                 >
                                     Aucune donnée enregistrée
@@ -278,7 +466,7 @@ const aggregateIncidents = computed(() => {
                             </h4>
                             <div class="rankList">
                                 <div
-                                    v-for="(emp, index) in worstEmployees"
+                                    v-for="(emp, index) in liveWorstEmployees"
                                     :key="emp.id"
                                     class="rankRow"
                                 >
@@ -294,7 +482,7 @@ const aggregateIncidents = computed(() => {
                                     </span>
                                 </div>
                                 <p
-                                    v-if="worstEmployees.length === 0"
+                                    v-if="liveWorstEmployees.length === 0"
                                     class="emptyLabel"
                                 >
                                     Zéro anomalie détectée
@@ -331,7 +519,7 @@ const aggregateIncidents = computed(() => {
     --success-dim: rgba(5, 150, 105, 0.12);
 
     font-family: "Sora", sans-serif;
-    /* Changed to 100% to cleanly adapt to MainLayout's internal height boundary */
+    min-height: 100vh;
     height: 100%;
     width: 100%;
     display: flex;
@@ -344,7 +532,6 @@ const aggregateIncidents = computed(() => {
     box-sizing: border-box;
 }
 
-/* Background Micro-patterns & Glow Orbs */
 .bg {
     position: absolute;
     inset: 0;
@@ -394,7 +581,6 @@ const aggregateIncidents = computed(() => {
     }
 }
 
-/* Sidebar Branding Layout rules */
 .sidebar {
     width: 260px;
     flex-shrink: 0;
@@ -491,7 +677,6 @@ const aggregateIncidents = computed(() => {
     }
 }
 
-/* Workspace Core Blocks */
 .content {
     flex: 1;
     height: 100%;
@@ -499,7 +684,7 @@ const aggregateIncidents = computed(() => {
     display: flex;
     flex-direction: column;
     gap: 40px;
-    overflow-y: auto; /* Content handles its own layout depth scrolls elegantly here */
+    overflow-y: auto;
     z-index: 10;
 }
 
@@ -508,6 +693,19 @@ const aggregateIncidents = computed(() => {
     justify-content: space-between;
     align-items: center;
     width: 100%;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.headerActions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.sidebarBackdrop {
+    display: none;
 }
 
 .pageHeader {
@@ -529,7 +727,6 @@ const aggregateIncidents = computed(() => {
     margin: 0;
 }
 
-/* Typographic High-End Metric Widgets */
 .executiveSummaryGrid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -611,7 +808,6 @@ const aggregateIncidents = computed(() => {
     }
 }
 
-/* Cards & Layout Alignments */
 .dashboard-grid {
     display: grid;
     grid-template-columns: 1.6fr 1.4fr;
@@ -699,13 +895,14 @@ const aggregateIncidents = computed(() => {
 .chartContainer {
     margin-top: auto;
     width: 100%;
+    min-width: 0;
+    overflow-x: auto;
     background: var(--surface2);
     border-radius: 12px;
     padding: 16px;
     border: 1px solid var(--border);
 }
 
-/* Leaderboards Visual Alignment Blocks */
 .leaderboardGrid {
     display: flex;
     flex-direction: column;
@@ -791,7 +988,111 @@ const aggregateIncidents = computed(() => {
     font-style: italic;
 }
 
-/* Adaptive Responsiveness Controls */
+.liveFeedSection {
+    background: var(--surface);
+    border: 1px solid rgba(34, 201, 122, 0.25);
+    border-radius: 16px;
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.liveFeedHeader {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    span.material-symbols-rounded {
+        font-size: 20px;
+        color: #22c97a;
+    }
+
+    h3 {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 700;
+        color: var(--text-primary);
+        flex: 1;
+    }
+}
+
+.livePulse {
+    font-size: 11px;
+    font-weight: 700;
+    color: #22c97a;
+    background: rgba(34, 201, 122, 0.12);
+    padding: 3px 8px;
+    border-radius: 6px;
+}
+
+.liveFeedList {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.liveFeedItem {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 13px;
+    animation: fadeSlideIn 0.3s ease;
+}
+
+@keyframes fadeSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.liveFeedName {
+    flex: 1;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.liveFeedStatut {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 6px;
+
+    &.a_lheure,
+    &.punctual {
+        background: var(--success-dim);
+        color: var(--success);
+    }
+    &.en_avance {
+        background: rgba(167, 139, 250, 0.15);
+        color: #a78bfa;
+    }
+    &.en_retard,
+    &.late {
+        background: var(--error-dim);
+        color: var(--error);
+    }
+    &.absent {
+        background: rgba(245, 166, 35, 0.12);
+        color: #f5a623;
+    }
+}
+
+.liveFeedTime {
+    font-size: 11px;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
 @media (max-width: 1340px) {
     .dashboard-grid {
         grid-template-columns: 1fr;
@@ -811,21 +1112,33 @@ const aggregateIncidents = computed(() => {
         height: auto;
         overflow: auto;
     }
-    .sidebar {
-        width: 100%;
-        flex-direction: row;
-        overflow-x: auto;
-        padding: 16px;
-        border-right: none;
-        border-bottom: 1px solid var(--border-strong);
 
-        .brand {
-            margin-bottom: 0;
-            margin-right: 16px;
+    .sidebarBackdrop {
+        display: block;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.55);
+        z-index: 40;
+    }
+
+    :deep(.adminSidebar) {
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        width: min(280px, 85vw);
+        z-index: 50;
+        transform: translateX(-100%);
+        transition: transform 0.25s ease;
+        overflow-y: auto;
+
+        &.open {
+            transform: translateX(0);
         }
     }
+
     .sidebarLabel {
-        display: none;
+        display: block;
     }
     .content {
         padding: 24px 20px;

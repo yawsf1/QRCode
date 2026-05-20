@@ -1,34 +1,64 @@
 <script setup>
 import { useForm, usePage } from "@inertiajs/vue3";
-import { computed } from "vue";
+import { computed, watch } from "vue";
 import { route } from "ziggy-js";
+import RegistrationVerificationModal from "../../components/Auth/RegistrationVerificationModal.vue";
 import MainButton from "../../components/Buttons/MainButton.vue";
-import SmallMainLink from "../../components/Links/SmallMainLink.vue";
 import SmallSecondaryLink from "../../components/Links/SmallSecondaryLink.vue";
+import { useRegistrationVerification } from "../../composables/useRegistrationVerification";
 
 const form = useForm({
     nom: "",
     prenom: "",
     email: "",
+    verification_code: "",
     password: "",
     telephone: "",
-    departement: "", // Unified casing
+    departement: "",
+});
+
+const {
+    showModal,
+    modalError,
+    startVerification,
+    closeModal,
+    confirmRegistration,
+} = useRegistrationVerification({
+    sendRoute: route("register.admin.verification.send"),
+    registerRoute: route("admin.register"),
 });
 
 const errors = computed(() => usePage().props.errors);
 
+watch(
+    () => form.email,
+    () => {
+        if (showModal.value) {
+            closeModal(form);
+        }
+    },
+);
+
+const submitLabel = computed(() => {
+    if (form.processing && !showModal.value) {
+        return "Vérification du formulaire…";
+    }
+
+    if (form.processing && showModal.value) {
+        return "Création en cours…";
+    }
+
+    return "Ajouter l'administrateur";
+});
+
 function register() {
-    form.post(route("admin.register"), {
-        onSuccess: () => {
-            form.reset();
-        },
-    });
+    startVerification(form);
 }
 </script>
 
 <template>
     <div class="pageContainer">
-        <div class="card">
+        <div class="card" :class="{ isDimmed: showModal }">
             <div class="topSection">
                 <SmallSecondaryLink
                     :link="route('super-admin.dashboard')"
@@ -49,6 +79,7 @@ function register() {
                             type="text"
                             v-model="form.nom"
                             placeholder="Nom"
+                            :disabled="showModal"
                         />
                         <p v-if="errors.nom" class="error">{{ errors.nom }}</p>
                     </div>
@@ -59,6 +90,7 @@ function register() {
                             type="text"
                             v-model="form.prenom"
                             placeholder="Prénom"
+                            :disabled="showModal"
                         />
                         <p v-if="errors.prenom" class="error">
                             {{ errors.prenom }}
@@ -71,6 +103,8 @@ function register() {
                             type="email"
                             v-model="form.email"
                             placeholder="adresse@exemple.com"
+                            autocomplete="email"
+                            :disabled="showModal"
                         />
                         <p v-if="errors.email" class="error">
                             {{ errors.email }}
@@ -85,6 +119,7 @@ function register() {
                             type="password"
                             v-model="form.password"
                             placeholder="••••••••"
+                            :disabled="showModal"
                         />
                         <p v-if="errors.password" class="error">
                             {{ errors.password }}
@@ -100,6 +135,7 @@ function register() {
                             type="text"
                             v-model="form.departement"
                             placeholder="Structure ou Entreprise SAS"
+                            :disabled="showModal"
                         />
                         <p v-if="errors.departement" class="error">
                             {{ errors.departement }}
@@ -112,6 +148,7 @@ function register() {
                             type="text"
                             v-model="form.telephone"
                             placeholder="N° de ligne directe"
+                            :disabled="showModal"
                         />
                         <p v-if="errors.telephone" class="error">
                             {{ errors.telephone }}
@@ -123,15 +160,25 @@ function register() {
                     <MainButton
                         type="submit"
                         :disabled="form.processing"
-                        :text="
-                            form.processing
-                                ? 'Ajout en cours...'
-                                : 'Ajouter l\'administrateur'
-                        "
+                        :text="submitLabel"
                     />
                 </div>
             </form>
         </div>
+
+        <RegistrationVerificationModal
+            :open="showModal"
+            :email="form.email"
+            :verification-code="form.verification_code"
+            :loading="form.processing"
+            :sending-code="false"
+            :error="modalError || errors.verification_code"
+            @close="closeModal(form)"
+            @confirm="confirmRegistration(form)"
+            @update:verification-code="
+                (value) => (form.verification_code = value)
+            "
+        />
     </div>
 </template>
 
@@ -163,12 +210,6 @@ function register() {
     box-sizing: border-box;
 }
 
-.topSection {
-    margin-bottom: 24px;
-    display: flex;
-    justify-content: flex-start;
-}
-
 .card {
     width: 100%;
     max-width: 540px;
@@ -177,6 +218,21 @@ function register() {
     border-radius: 16px;
     padding: 32px;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    transition:
+        opacity 0.25s ease,
+        filter 0.25s ease;
+
+    &.isDimmed {
+        opacity: 0.35;
+        pointer-events: none;
+        filter: blur(1px);
+    }
+}
+
+.topSection {
+    margin-bottom: 24px;
+    display: flex;
+    justify-content: flex-start;
 }
 
 .title {
@@ -194,7 +250,6 @@ function register() {
     line-height: 1.5;
 }
 
-/* FORM */
 .form {
     display: flex;
     flex-direction: column;
@@ -207,7 +262,6 @@ function register() {
     gap: 16px;
 }
 
-/* FIELD */
 .field {
     display: flex;
     flex-direction: column;
@@ -232,7 +286,6 @@ label {
     font-weight: 700;
 }
 
-/* INPUTS */
 input {
     width: 100%;
     padding: 12px 16px;
@@ -254,6 +307,10 @@ input {
     &:focus {
         border-color: var(--accent);
         box-shadow: 0 0 0 1px var(--accent);
+    }
+
+    &:disabled {
+        cursor: not-allowed;
     }
 }
 
@@ -291,7 +348,6 @@ input {
     }
 }
 
-/* MOBILE RESPONSIVE CLOSURES */
 @media (max-width: 768px) {
     .grid {
         grid-template-columns: 1fr;

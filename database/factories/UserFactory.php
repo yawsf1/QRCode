@@ -1,36 +1,21 @@
 <?php
-
 namespace Database\Factories;
-
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
-
-/**
- * @extends Factory<User>
- */
 class UserFactory extends Factory
 {
-    /**
-     * The current password being used by the factory.
-     */
     protected static ?string $password;
-
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
     public function definition(): array
     {
         return [
-            'nom' => fake()->name(),
-            'prenom' => fake()->name(),
+            'nom' => fake()->lastName(),
+            'prenom' => fake()->firstName(),
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
             'role' => 'admin',
-            'admin_id' => 1,
+            'admin_id' => null,
             'est_actif' => true,
             'departement' => fake()->company(),
             'telephone' => fake()->phoneNumber(),
@@ -38,13 +23,32 @@ class UserFactory extends Factory
             'remember_token' => Str::random(10),
         ];
     }
-
-    /**
-     * Indicate that the model's email address should be unverified.
-     */
+    public function superAdmin(): static
+    {
+        return $this->state(fn () => [
+            'role' => 'super_admin',
+            'admin_id' => null,
+            'departement' => 'Plateforme',
+        ]);
+    }
+    public function admin(): static
+    {
+        return $this->state(fn () => [
+            'role' => 'admin',
+            'admin_id' => null,
+            'departement' => fake()->company(),
+        ]);
+    }
+    public function employe(int $adminId): static
+    {
+        return $this->state(fn () => [
+            'role' => 'employe',
+            'admin_id' => $adminId,
+        ]);
+    }
     public function unverified(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn () => [
             'email_verified_at' => null,
         ]);
     }

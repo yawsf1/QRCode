@@ -3,7 +3,9 @@ import { route } from "ziggy-js";
 import { router } from "@inertiajs/vue3";
 import LineChart from "../../components/Charts/LineChart.vue";
 import PieChart from "../../components/Charts/PieChart.vue";
-import { computed } from "vue";
+import AppBrand from "../../components/Layout/AppBrand.vue";
+import DashboardSidebarLogout from "../../components/Layout/DashboardSidebarLogout.vue";
+import { computed, ref, onMounted, onUnmounted } from "vue";
 
 const props = defineProps({
     months: Array,
@@ -11,81 +13,138 @@ const props = defineProps({
     salesData2: Array,
     entrepriseNames: Array,
     employeeCounts: Array,
+    currentMonthIndex: { type: Number, default: () => new Date().getMonth() },
+});
+
+const liveSalesData = ref([...(props.salesData || [])]);
+const liveSalesData2 = ref([...(props.salesData2 || [])]);
+const liveEntrepriseNames = ref([...(props.entrepriseNames || [])]);
+const liveEmployeeCounts = ref([...(props.employeeCounts || [])]);
+
+const monthIndex = props.currentMonthIndex ?? new Date().getMonth();
+
+onMounted(() => {
+    window.Echo.channel("platform-channel").listen(".stats-updated", (e) => {
+        const { type, payload } = e;
+
+        if (type === "admin_created") {
+            const idx = payload?.monthIndex ?? monthIndex;
+            liveSalesData.value[idx] = (liveSalesData.value[idx] || 0) + 1;
+        }
+
+        if (type === "employe_created") {
+            const idx = payload?.monthIndex ?? monthIndex;
+            liveSalesData2.value[idx] = (liveSalesData2.value[idx] || 0) + 1;
+
+            if (payload?.departement) {
+                const nameIdx = liveEntrepriseNames.value.indexOf(
+                    payload.departement,
+                );
+                if (nameIdx >= 0) {
+                    liveEmployeeCounts.value[nameIdx]++;
+                }
+            }
+        }
+
+        if (type === "employe_deleted" && payload?.departement) {
+            const nameIdx = liveEntrepriseNames.value.indexOf(
+                payload.departement,
+            );
+            if (nameIdx >= 0 && liveEmployeeCounts.value[nameIdx] > 0) {
+                liveEmployeeCounts.value[nameIdx]--;
+            }
+        }
+    });
+});
+
+onUnmounted(() => {
+    window.Echo.leaveChannel("platform-channel");
 });
 
 const chartDatasets = computed(() => [
     {
         label: "Administrateurs",
-        data: props.salesData || [],
-        color: "#4f7cff" /* Matches dark theme accent */,
+        data: liveSalesData.value,
+        color: "#4f7cff",
     },
     {
         label: "Employés",
-        data: props.salesData2 || [],
+        data: liveSalesData2.value,
         color: "#06b6d4",
     },
 ]);
 
-const totalAdminsThisYear = computed(() => {
-    return (props.salesData || []).reduce((acc, curr) => acc + curr, 0);
-});
+const totalAdminsThisYear = computed(() =>
+    liveSalesData.value.reduce((acc, curr) => acc + curr, 0),
+);
 
-const totalEmployesThisYear = computed(() => {
-    return (props.salesData2 || []).reduce((acc, curr) => acc + curr, 0);
-});
+const totalEmployesThisYear = computed(() =>
+    liveSalesData2.value.reduce((acc, curr) => acc + curr, 0),
+);
 </script>
 
 <template>
     <div class="dashboard">
         <aside class="sidebar">
-            <p class="sidebarLabel">Super admin</p>
+            <div class="sidebarMain">
+                <AppBrand class="sidebarBrand" />
+                <p class="sidebarLabel">Super administrateur</p>
 
-            <button
-                class="navBtn active"
-                @click="router.visit(route('super-admin.dashboard'))"
-            >
-                <span class="material-symbols-rounded">dashboard</span>
-                Tableau de bord
-            </button>
+                <button
+                    class="navBtn active"
+                    @click="router.visit(route('super-admin.dashboard'))"
+                >
+                    <span class="material-symbols-rounded">dashboard</span>
+                    Tableau de bord
+                </button>
 
-            <button
-                class="navBtn"
-                @click="router.visit(route('admin.register.form'))"
-            >
-                <span class="material-symbols-rounded">person_add</span>
-                Ajouter un admin
-            </button>
+                <button
+                    class="navBtn"
+                    @click="router.visit(route('admin.register.form'))"
+                >
+                    <span class="material-symbols-rounded">person_add</span>
+                    Ajouter un admin
+                </button>
 
-            <button class="navBtn" @click="router.visit(route('admin.list'))">
-                <span class="material-symbols-rounded">group</span>
-                Afficher les admins
-            </button>
+                <button
+                    class="navBtn"
+                    @click="router.visit(route('admin.list'))"
+                >
+                    <span class="material-symbols-rounded">group</span>
+                    Afficher les admins
+                </button>
+            </div>
+
+            <DashboardSidebarLogout />
         </aside>
 
         <main class="content">
             <div class="pageHeader">
                 <h1 class="pageTitle">Tableau de bord</h1>
-                <p class="pageSubtitle">Vue d'ensemble de la plateforme</p>
+                <p class="pageSubtitle">
+                    Vue d'ensemble de la plateforme
+                    <span class="liveBadge">● Temps réel</span>
+                </p>
             </div>
 
             <div class="dashboard-grid">
                 <div class="chartCard line-card">
                     <div class="chartHeader">
                         <div class="meta">
-                            <span class="badge">Rapport Annuel Global</span>
+                            <span class="badge">Année en cours</span>
                             <h2 class="cardTitle">
-                                Évolution des Créations de Comptes
+                                Évolution des créations de comptes
                             </h2>
                         </div>
                         <div class="statSummaryContainer">
                             <div class="statSummary adminColor">
-                                <span class="statLabel">Total Admins</span>
+                                <span class="statLabel">Total admins</span>
                                 <span class="statValue">{{
                                     totalAdminsThisYear
                                 }}</span>
                             </div>
                             <div class="statSummary employeColor">
-                                <span class="statLabel">Total Employés</span>
+                                <span class="statLabel">Total employés</span>
                                 <span class="statValue">{{
                                     totalEmployesThisYear
                                 }}</span>
@@ -101,8 +160,8 @@ const totalEmployesThisYear = computed(() => {
                 <div class="chartCard pie-card">
                     <div class="chartHeader">
                         <div class="meta">
-                            <span class="badge">Effectifs Globaux</span>
-                            <h2 class="cardTitle">Top 5 Entreprises</h2>
+                            <span class="badge">Effectifs globaux</span>
+                            <h2 class="cardTitle">Top 5 entreprises</h2>
                             <p class="cardSubtitle">
                                 Classement des structures par nombre d'employés
                             </p>
@@ -111,8 +170,8 @@ const totalEmployesThisYear = computed(() => {
 
                     <div class="chartContainer">
                         <PieChart
-                            :labels="props.entrepriseNames || []"
-                            :employeeCounts="props.employeeCounts || []"
+                            :labels="liveEntrepriseNames"
+                            :employeeCounts="liveEmployeeCounts"
                         />
                     </div>
                 </div>
@@ -142,7 +201,7 @@ const totalEmployesThisYear = computed(() => {
     display: flex;
     width: 100%;
     max-width: 100%;
-    min-height: calc(100vh - 60px);
+    min-height: 100vh;
     background: var(--bg);
     color: var(--text-primary);
     box-sizing: border-box;
@@ -155,8 +214,20 @@ const totalEmployesThisYear = computed(() => {
     border-right: 1px solid var(--border);
     display: flex;
     flex-direction: column;
+    justify-content: space-between;
     padding: 24px 12px;
+    min-height: 100vh;
     gap: 4px;
+}
+
+.sidebarMain {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.sidebarBrand {
+    margin-bottom: 28px;
 }
 
 .sidebarLabel {
@@ -238,6 +309,13 @@ const totalEmployesThisYear = computed(() => {
     font-size: 14px;
     color: var(--text-secondary);
     margin: 0;
+}
+
+.liveBadge {
+    color: #22c97a;
+    font-size: 12px;
+    font-weight: 600;
+    margin-left: 8px;
 }
 
 .dashboard-grid {
@@ -334,8 +412,10 @@ const totalEmployesThisYear = computed(() => {
 .chartContainer {
     margin-top: auto;
     width: 100%;
+    min-width: 0;
     min-height: 260px;
     position: relative;
+    overflow-x: auto;
 }
 
 @media (max-width: 1200px) {

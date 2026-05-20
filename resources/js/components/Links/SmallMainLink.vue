@@ -30,11 +30,11 @@ defineProps({
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    height: 36px; /* Matches the small secondary link height exactly */
+    height: 36px; 
     padding: 0 16px;
     background: var(--accent);
     color: #ffffff;
-    border-radius: 8px; /* Sharper profile consistency */
+    border-radius: 8px; 
     border: none;
     cursor: pointer;
     font-family: "Sora", sans-serif;

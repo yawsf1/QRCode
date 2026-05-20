@@ -1,5 +1,5 @@
 <script setup>
-import { usePage } from "@inertiajs/vue3";
+import { useForm, usePage } from "@inertiajs/vue3";
 import MainLink from "../components/Links/MainLink.vue";
 import { route } from "ziggy-js";
 import { computed, ref } from "vue";
@@ -18,39 +18,60 @@ const dashboardRoute = computed(() => {
 
 const faqItems = [
     {
-        q: "Quels sont les prérequis matériels ?",
-        a: "Aucun achat nécessaire. L'administrateur RH affiche ou imprime le code QR, et les employés utilisent leur propre smartphone pour scanner.",
+        q: "Quel matériel faut-il ?",
+        a: "Aucune pointeuse à acheter. L'administrateur affiche le QR sur un écran (borne) ou l'imprime, et chaque employé scanne avec le navigateur de son smartphone — sans application à installer.",
     },
     {
-        q: "Comment le système empêche-t-il la fraude au pointage ?",
-        a: "Les scans reposent sur des tokens d'authentification uniques liés au compte actif de l'utilisateur. Il est impossible de pointer à la place d'un collègue absent.",
+        q: "Comment limiter la fraude au pointage ?",
+        a: "Chaque scan est enregistré sur le compte connecté de l'employé. Le code QR est renouvelé automatiquement toutes les ~15 secondes : un code capturé ou partagé expire vite. Chaque employé ne peut pointer qu'une fois par jour.",
     },
     {
-        q: "Peut-on exporter les données vers les logiciels de paie ?",
-        a: "Oui. Toutes les statistiques (présences, absences, retards, départs anticipés) sont exportables instantanément pour vos gestionnaires de paie.",
+        q: "Peut-on exporter les données ?",
+        a: "Oui. L'administrateur télécharge un rapport CSV par employé (journalier, mensuel ou annuel) : date, heure, statut (à l'heure, retard, avance), écart en minutes. Vous l'importez ensuite dans votre logiciel de paie si besoin.",
     },
     {
-        q: "Est-ce adapté aux entreprises avec des horaires d'équipes différents ?",
-        a: "Absolument. Vous pouvez configurer des horaires et des jours ouvrés distincts pour chaque employé de manière 100% individualisée.",
+        q: "Les horaires peuvent-ils différer par employé ?",
+        a: "Oui. Pour chaque employé : heure de début et de fin, jours ouvrés (lun–dim) et tolérance de retard en minutes, configurés par l'administrateur de l'entreprise.",
     },
     {
-        q: "Le déploiement est-il vraiment possible en 5 minutes ?",
-        a: "Oui. Créez votre compte, invitez vos employés par email, configurez les horaires — c'est tout. Aucune installation serveur, aucun technicien requis.",
+        q: "Combien de temps pour démarrer ?",
+        a: "Une fois votre espace administrateur créé, vous ajoutez les employés (avec vérification e-mail), configurez leurs horaires et affichez la borne QR. La première présence peut être enregistrée le jour même.",
     },
     {
-        q: "Les données sont-elles stockées de manière sécurisée ?",
-        a: "Toutes les données sont chiffrées en transit et au repos. Notre infrastructure est hébergée sur des serveurs conformes aux normes de sécurité les plus strictes.",
+        q: "Comment sont protégées les données ?",
+        a: "Connexion HTTPS, mots de passe hashés, sessions sécurisées. Un administrateur ne voit que les employés rattachés à son entreprise. Les comptes employés n'accèdent qu'à leur propre historique.",
+    },
+    {
+        q: "Enregistre-t-on l'arrivée et le départ ?",
+        a: "Aujourd'hui, QRCoded enregistre un pointage d'arrivée par jour (avec calcul du retard ou de l'avance). Le suivi de départ en fin de journée n'est pas encore disponible.",
     },
 ];
+
+const form = useForm({
+    email: user.value ? user.value.email : "",
+    message: "",
+    nom: user.value ? user.value.nom : "",
+    prenom: user.value ? user.value.prenom : "",
+});
 
 const toggleFaq = (i) => {
     openFaq.value = openFaq.value === i ? null : i;
 };
+
+function handleMessageSending() {
+    form.post(route("contact.send"), {
+        onSuccess: () => {
+            form.reset();
+        },
+        onError: () => {
+            form.reset();
+        },
+    });
+}
 </script>
 
 <template>
     <div class="homePage">
-        <!-- HERO -->
         <section class="heroSection">
             <div class="heroBg">
                 <div class="gridPattern"></div>
@@ -61,28 +82,32 @@ const toggleFaq = (i) => {
                 <div class="heroLeft">
                     <div class="eyebrow">
                         <span class="eyebrowDot"></span>
-                        Conforme au Code du Travail Marocain
+                        Pointage par QR — sans pointeuse
                     </div>
                     <h1 class="heroTitle">
                         Le pointage<br />
                         <em>réinventé.</em>
                     </h1>
                     <p class="heroSub">
-                        Fini les pointeuses à 4 000 DH et les tableurs
-                        falsifiés. QRCoded transforme n'importe quel smartphone
-                        en terminal de présence sécurisé, en 5 minutes.
+                        Fini les pointeuses coûteuses et les tableurs
+                        manuels. QRCoded permet à vos employés de pointer
+                        leur arrivée en scannant un QR depuis leur smartphone,
+                        avec tableaux de bord pour les managers.
                     </p>
                     <div class="heroCtas">
                         <MainLink
                             v-if="!user"
                             :link="route('user.login')"
-                            text="Déployer maintenant"
+                            text="Se connecter"
                         />
                         <MainLink
                             v-else
                             :link="dashboardRoute"
-                            text="Accéder au Dashboard"
+                            text="Accéder au tableau de bord"
                         />
+                        <a href="#request-service" class="outlineBtn">
+                            <span>Nous contacter</span>
+                        </a>
                         <a href="#workflow" class="ghostBtn">
                             <span>Voir comment ça marche</span>
                             <svg
@@ -116,50 +141,34 @@ const toggleFaq = (i) => {
                         <div class="mockBody">
                             <div class="mockSidebar">
                                 <div class="mockSideItem active">
-                                    <span class="material-symbols-rounded"
-                                        >grid_view</span
-                                    >
+                                    <span class="material-symbols-rounded">grid_view</span>
                                 </div>
                                 <div class="mockSideItem">
-                                    <span class="material-symbols-rounded"
-                                        >badge</span
-                                    >
+                                    <span class="material-symbols-rounded">badge</span>
                                 </div>
                                 <div class="mockSideItem">
-                                    <span class="material-symbols-rounded"
-                                        >bar_chart</span
-                                    >
+                                    <span class="material-symbols-rounded">bar_chart</span>
                                 </div>
                                 <div class="mockSideItem">
-                                    <span class="material-symbols-rounded"
-                                        >calendar_month</span
-                                    >
+                                    <span class="material-symbols-rounded">calendar_month</span>
                                 </div>
                                 <div class="mockSideItem">
-                                    <span class="material-symbols-rounded"
-                                        >settings</span
-                                    >
+                                    <span class="material-symbols-rounded">settings</span>
                                 </div>
                             </div>
                             <div class="mockContent">
                                 <div class="mockTopRow">
                                     <div class="mockStatCard stat1">
                                         <span class="statVal">94%</span>
-                                        <span class="statLabel"
-                                            >Présence aujourd'hui</span
-                                        >
+                                        <span class="statLabel">Présence aujourd'hui</span>
                                     </div>
                                     <div class="mockStatCard stat2">
                                         <span class="statVal">3</span>
-                                        <span class="statLabel"
-                                            >Retards signalés</span
-                                        >
+                                        <span class="statLabel">Retards signalés</span>
                                     </div>
                                     <div class="mockStatCard stat3">
                                         <span class="statVal">128</span>
-                                        <span class="statLabel"
-                                            >Employés actifs</span
-                                        >
+                                        <span class="statLabel">Employés actifs</span>
                                     </div>
                                 </div>
                                 <div class="mockChart">
@@ -167,72 +176,39 @@ const toggleFaq = (i) => {
                                         Présences — 7 derniers jours
                                     </div>
                                     <div class="chartBars">
-                                        <div class="bar" style="--h: 75%">
-                                            <span>L</span>
-                                        </div>
-                                        <div class="bar" style="--h: 90%">
-                                            <span>M</span>
-                                        </div>
-                                        <div class="bar" style="--h: 85%">
-                                            <span>M</span>
-                                        </div>
-                                        <div class="bar" style="--h: 95%">
-                                            <span>J</span>
-                                        </div>
-                                        <div
-                                            class="bar active"
-                                            style="--h: 88%"
-                                        >
-                                            <span>V</span>
-                                        </div>
-                                        <div class="bar dim" style="--h: 30%">
-                                            <span>S</span>
-                                        </div>
-                                        <div class="bar dim" style="--h: 10%">
-                                            <span>D</span>
-                                        </div>
+                                        <div class="bar" style="--h: 75%"><span>L</span></div>
+                                        <div class="bar" style="--h: 90%"><span>M</span></div>
+                                        <div class="bar" style="--h: 85%"><span>M</span></div>
+                                        <div class="bar" style="--h: 95%"><span>J</span></div>
+                                        <div class="bar active" style="--h: 88%"><span>V</span></div>
+                                        <div class="bar dim" style="--h: 30%"><span>S</span></div>
+                                        <div class="bar dim" style="--h: 10%"><span>D</span></div>
                                     </div>
                                 </div>
                                 <div class="mockEmployeeList">
                                     <div class="empRow">
                                         <div class="empAvatar a1">SK</div>
                                         <div class="empInfo">
-                                            <span class="empName"
-                                                >Salma K.</span
-                                            >
-                                            <span class="empTime"
-                                                >Arrivée 08:47</span
-                                            >
+                                            <span class="empName">Salma K.</span>
+                                            <span class="empTime">Arrivée 08:47</span>
                                         </div>
-                                        <div class="empBadge on-time">
-                                            À l'heure
-                                        </div>
+                                        <div class="empBadge on-time">À l'heure</div>
                                     </div>
                                     <div class="empRow">
                                         <div class="empAvatar a2">MR</div>
                                         <div class="empInfo">
-                                            <span class="empName"
-                                                >Mohamed R.</span
-                                            >
-                                            <span class="empTime"
-                                                >Arrivée 09:14</span
-                                            >
+                                            <span class="empName">Mohamed R.</span>
+                                            <span class="empTime">Arrivée 09:14</span>
                                         </div>
                                         <div class="empBadge late">+14 min</div>
                                     </div>
                                     <div class="empRow">
                                         <div class="empAvatar a3">FZ</div>
                                         <div class="empInfo">
-                                            <span class="empName"
-                                                >Fatima Z.</span
-                                            >
-                                            <span class="empTime"
-                                                >Arrivée 08:59</span
-                                            >
+                                            <span class="empName">Fatima Z.</span>
+                                            <span class="empTime">Arrivée 08:59</span>
                                         </div>
-                                        <div class="empBadge on-time">
-                                            À l'heure
-                                        </div>
+                                        <div class="empBadge on-time">À l'heure</div>
                                     </div>
                                 </div>
                             </div>
@@ -242,65 +218,55 @@ const toggleFaq = (i) => {
             </div>
         </section>
 
-        <!-- METRICS RIBBON -->
         <section class="metricsSection">
             <div class="metricsInner">
                 <div class="metricItem">
-                    <div class="metricNum">-75%</div>
-                    <div class="metricDesc">de charge administrative RH</div>
-                </div>
-                <div class="metricDivider"></div>
-                <div class="metricItem">
                     <div class="metricNum">0 DH</div>
-                    <div class="metricDesc">de matériel ou d'installation</div>
+                    <div class="metricDesc">de pointeuse à acheter</div>
                 </div>
                 <div class="metricDivider"></div>
                 <div class="metricItem">
-                    <div class="metricNum">5 min</div>
-                    <div class="metricDesc">pour un déploiement complet</div>
+                    <div class="metricNum">~15 s</div>
+                    <div class="metricDesc">de validité par code QR</div>
                 </div>
                 <div class="metricDivider"></div>
                 <div class="metricItem">
-                    <div class="metricNum">100%</div>
-                    <div class="metricDesc">
-                        données chiffrées & infalsifiables
-                    </div>
+                    <div class="metricNum">1×</div>
+                    <div class="metricDesc">pointage d'arrivée par jour</div>
+                </div>
+                <div class="metricDivider"></div>
+                <div class="metricItem">
+                    <div class="metricNum">CSV</div>
+                    <div class="metricDesc">rapports exportables par employé</div>
                 </div>
             </div>
         </section>
 
-        <!-- FEATURES -->
         <section id="features" class="featuresSection">
             <div class="sectionContainer">
                 <div class="sectionLabel">Fonctionnalités</div>
                 <h2 class="sectionTitle">
-                    Tout ce dont vos RH ont besoin,<br /><em
-                        >rien de superflu.</em
-                    >
+                    Tout ce dont votre entreprise a besoin,<br /><em>rien de superflu.</em>
                 </h2>
                 <div class="featuresGrid">
                     <div class="featureCard large">
                         <div class="featureIcon">
-                            <span class="material-symbols-rounded"
-                                >qr_code_scanner</span
-                            >
+                            <span class="material-symbols-rounded">qr_code_scanner</span>
                         </div>
                         <div class="featureBody">
-                            <h3>Scans QR Sécurisés</h3>
+                            <h3>Scans QR sécurisés</h3>
                             <p>
-                                Un code QR dynamique, régénéré à chaque session.
-                                Vos collaborateurs pointent leur arrivée et
-                                départ via leur propre smartphone — sans
-                                application tierce à installer.
+                                Code QR dynamique, renouvelé en continu sur la
+                                borne admin. Chaque employé scanne une fois par
+                                jour depuis son navigateur mobile — aucune app à
+                                installer.
                             </p>
                         </div>
                         <div class="featureAccent"></div>
                     </div>
                     <div class="featureCard">
                         <div class="featureIcon amber">
-                            <span class="material-symbols-rounded"
-                                >alarm_smart_wake</span
-                            >
+                            <span class="material-symbols-rounded">alarm_smart_wake</span>
                         </div>
                         <h3>Calcul de Retard Intelligent</h3>
                         <p>
@@ -311,104 +277,81 @@ const toggleFaq = (i) => {
                     </div>
                     <div class="featureCard">
                         <div class="featureIcon blue">
-                            <span class="material-symbols-rounded"
-                                >calendar_month</span
-                            >
+                            <span class="material-symbols-rounded">calendar_month</span>
                         </div>
-                        <h3>Plannings Sur-mesure</h3>
+                        <h3>Horaires sur mesure</h3>
                         <p>
-                            Jours ouvrés et horaires entièrement
-                            personnalisables par profil de poste — shifts de
-                            nuit, équipes weekend, temps partiel.
+                            Heure de début, heure de fin, jours ouvrés et
+                            tolérance de retard configurables individuellement
+                            pour chaque employé.
                         </p>
                     </div>
                     <div class="featureCard">
                         <div class="featureIcon green">
-                            <span class="material-symbols-rounded"
-                                >download</span
-                            >
+                            <span class="material-symbols-rounded">download</span>
                         </div>
-                        <h3>Export Paie Instantané</h3>
+                        <h3>Export CSV</h3>
                         <p>
-                            Toutes les données de présences, absences et retards
-                            sont exportables pour vos logiciels de paie en un
-                            clic.
+                            Rapport téléchargeable par employé (journalier,
+                            mensuel ou annuel) avec résumé et détail des
+                            pointages — prêt à importer dans Excel ou la paie.
                         </p>
                     </div>
                     <div class="featureCard">
                         <div class="featureIcon purple">
                             <span class="material-symbols-rounded">lock</span>
                         </div>
-                        <h3>Anti-fraude Intégré</h3>
+                        <h3>Contrôle des pointages</h3>
                         <p>
-                            Tokens d'authentification uniques liés au compte
-                            actif. Un employé ne peut pas pointer à distance
-                            pour un collègue absent.
+                            Scan lié au compte employé connecté, QR à courte
+                            durée de vie, et blocage d'un second pointage le
+                            même jour.
                         </p>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- WORKFLOW / ROLES -->
         <section id="workflow" class="workflowSection">
             <div class="sectionContainer">
                 <div class="workflowGrid">
                     <div class="workflowLeft">
-                        <div class="sectionLabel">Architecture Système</div>
+                        <div class="sectionLabel">Organisation multi-entreprises</div>
                         <h2 class="sectionTitle">
-                            Conçu pour les structures <em>complexes.</em>
+                            Trois niveaux d'<em>accès.</em>
                         </h2>
                         <p class="workflowIntro">
-                            Notre hiérarchie de rôles s'adapte nativement à la
-                            topologie de votre organisation, quelle que soit sa
-                            taille.
+                            Chaque entreprise dispose de son administrateur et
+                            de ses employés. Les données d'une entreprise ne sont
+                            pas visibles par les autres administrateurs.
                         </p>
                         <div class="rolesStack">
                             <div class="roleItem">
-                                <div class="roleIconWrap gold">
-                                    <span class="material-symbols-rounded"
-                                        >shield_person</span
-                                    >
-                                </div>
-                                <div class="roleContent">
-                                    <h4>Super Administrateur</h4>
-                                    <p>
-                                        Gestion globale de la plateforme,
-                                        création de comptes entreprises, audits
-                                        complets du système.
-                                    </p>
-                                </div>
-                            </div>
-                            <div class="roleLine"></div>
-                            <div class="roleItem">
                                 <div class="roleIconWrap dark">
-                                    <span class="material-symbols-rounded"
-                                        >admin_panel_settings</span
-                                    >
+                                    <span class="material-symbols-rounded">admin_panel_settings</span>
                                 </div>
                                 <div class="roleContent">
-                                    <h4>Administrateur RH</h4>
+                                    <h4>Administrateur d'entreprise</h4>
                                     <p>
-                                        Gestion du registre employés, ajustement
-                                        des horaires collectifs, export des
-                                        fiches de paie.
+                                        Gère son équipe : ajout d'employés (avec
+                                        code de vérification e-mail), horaires,
+                                        borne QR, tableaux de bord temps réel et
+                                        export CSV des présences.
                                     </p>
                                 </div>
                             </div>
                             <div class="roleLine"></div>
                             <div class="roleItem">
                                 <div class="roleIconWrap blue">
-                                    <span class="material-symbols-rounded"
-                                        >badge</span
-                                    >
+                                    <span class="material-symbols-rounded">badge</span>
                                 </div>
                                 <div class="roleContent">
-                                    <h4>Collaborateur</h4>
+                                    <h4>Employés</h4>
                                     <p>
-                                        Tableau de bord personnel pour suivre
-                                        ses statistiques mensuelles de présence
-                                        et ses retards.
+                                        Compte créé par leur administrateur. Ils
+                                        scannent le QR pour pointer leur arrivée
+                                        et consultent leur tableau de bord
+                                        personnel (historique, retards, stats).
                                     </p>
                                 </div>
                             </div>
@@ -417,50 +360,44 @@ const toggleFaq = (i) => {
                     <div class="workflowRight">
                         <div class="orgChart">
                             <div class="orgNode root">
-                                <span class="material-symbols-rounded"
-                                    >corporate_fare</span
-                                >
-                                Direction Générale
-                                <div class="nodeTag">Super Admin</div>
+                                <span class="material-symbols-rounded">cloud</span>
+                                Plateforme QRCoded
+                                <div class="nodeTag">Infrastructure</div>
                             </div>
                             <div class="orgBranch">
                                 <div class="orgBranchLine"></div>
                                 <div class="orgChildren">
                                     <div class="orgChildWrap">
                                         <div class="orgNode mid">
-                                            <span
-                                                class="material-symbols-rounded"
-                                                >groups</span
-                                            >
-                                            Département RH
-                                            <div class="nodeTag mid">Admin</div>
+                                            <span class="material-symbols-rounded">corporate_fare</span>
+                                            Entreprise A
+                                            <div class="nodeTag mid">Données isolées</div>
                                         </div>
                                         <div class="orgLeaves">
+                                            <div class="orgNode leaf style-admin">
+                                                <span class="material-symbols-rounded">manage_accounts</span>
+                                                1 Administrateur
+                                            </div>
                                             <div class="orgNode leaf">
-                                                <span
-                                                    class="material-symbols-rounded"
-                                                    >person</span
-                                                >
-                                                Employés
+                                                <span class="material-symbols-rounded">groups</span>
+                                                N Employés
                                             </div>
                                         </div>
                                     </div>
                                     <div class="orgChildWrap">
                                         <div class="orgNode mid">
-                                            <span
-                                                class="material-symbols-rounded"
-                                                >laptop_mac</span
-                                            >
-                                            Équipe Technique
-                                            <div class="nodeTag mid">Admin</div>
+                                            <span class="material-symbols-rounded">corporate_fare</span>
+                                            Entreprise B
+                                            <div class="nodeTag mid">Données isolées</div>
                                         </div>
                                         <div class="orgLeaves">
+                                            <div class="orgNode leaf style-admin">
+                                                <span class="material-symbols-rounded">manage_accounts</span>
+                                                1 Administrateur
+                                            </div>
                                             <div class="orgNode leaf">
-                                                <span
-                                                    class="material-symbols-rounded"
-                                                    >person</span
-                                                >
-                                                Employés
+                                                <span class="material-symbols-rounded">groups</span>
+                                                N Employés
                                             </div>
                                         </div>
                                     </div>
@@ -472,7 +409,93 @@ const toggleFaq = (i) => {
             </div>
         </section>
 
-        <!-- FAQ -->
+        <section id="request-service" class="serviceRequestSection">
+            <div class="sectionContainer">
+                <div class="requestGrid">
+                    <div class="requestInfo">
+                        <div class="sectionLabel">Demande d'accès</div>
+                        <h2 class="sectionTitle">
+                            Prêt à moderniser votre gestion de
+                            <em>présence ?</em>
+                        </h2>
+                        <p class="requestIntro">
+                            Vous n'avez pas encore de compte administrateur ?
+                            Décrivez votre besoin ci-dessous. Notre équipe lit
+                            chaque message et vous répond par e-mail.
+                        </p>
+                        <div class="noticeBox">
+                            <div class="noticeIcon">
+                                <span class="material-symbols-rounded">mail_lock</span>
+                            </div>
+                            <div class="noticeText">
+                                Ce formulaire enregistre votre demande dans notre
+                                système. Si vous avez déjà un compte, utilisez
+                                plutôt <strong>Se connecter</strong> en haut de
+                                page.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="requestFormContainer">
+                        <form
+                            class="interactiveForm"
+                            @submit.prevent="handleMessageSending"
+                        >
+                            <div class="formRow">
+                                <div v-if="!user" class="formGroup">
+                                    <label for="nom">Nom</label>
+                                    <input
+                                        type="text"
+                                        v-model="form.nom"
+                                        id="nom"
+                                        required
+                                        placeholder="Ex: El Alami"
+                                    />
+                                </div>
+                                <div v-if="!user" class="formGroup">
+                                    <label for="prenom">Prénom</label>
+                                    <input
+                                        type="text"
+                                        v-model="form.prenom"
+                                        id="prenom"
+                                        required
+                                        placeholder="Ex: Amine"
+                                    />
+                                </div>
+                            </div>
+
+                            <div v-if="!user" class="formGroup">
+                                <label for="email">Adresse E-mail</label>
+                                <input
+                                    type="email"
+                                    v-model="form.email"
+                                    id="email"
+                                    required
+                                    placeholder="Ex: contact@entreprise.ma"
+                                />
+                            </div>
+
+                            <div class="formGroup">
+                                <label for="message">Votre Message</label>
+                                <textarea
+                                    id="message"
+                                    v-model="form.message"
+                                    rows="6"
+                                    required
+                                    placeholder="Décrivez la taille de votre entreprise et vos besoins spécifiques..."
+                                ></textarea>
+                            </div>
+
+                            <button type="submit" class="submitRequestBtn">
+                                <span>Envoyer la demande</span>
+                                <span class="material-symbols-rounded">arrow_right_alt</span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <section id="faq" class="faqSection">
             <div class="sectionContainer">
                 <div class="sectionLabel">FAQ</div>
@@ -488,12 +511,7 @@ const toggleFaq = (i) => {
                         <div class="faqQuestion">
                             <span>{{ item.q }}</span>
                             <div class="faqToggle">
-                                <svg
-                                    width="14"
-                                    height="14"
-                                    viewBox="0 0 14 14"
-                                    fill="none"
-                                >
+                                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                                     <path
                                         d="M7 1v12M1 7h12"
                                         stroke="currentColor"
@@ -511,25 +529,29 @@ const toggleFaq = (i) => {
             </div>
         </section>
 
-        <!-- CTA -->
         <section class="ctaSection">
             <div class="ctaInner">
                 <div class="ctaBg">
                     <div class="ctaGlow"></div>
                 </div>
                 <div class="ctaContent">
-                    <div class="ctaEyebrow">Commencer gratuitement</div>
-                    <h2>Modernisez vos RH<br /><em>dès aujourd'hui.</em></h2>
+                    <div class="ctaEyebrow">Prêt à essayer ?</div>
+                    <h2>
+                        Modernisez votre gestion<br /><em>dès aujourd'hui.</em>
+                    </h2>
                     <p>
-                        Rejoignez les entreprises qui font confiance à QRCoded
-                        pour un pointage sécurisé et sans friction.
+                        Connectez-vous si vous avez déjà un compte, ou envoyez
+                        une demande d'accès via le formulaire ci-dessus.
                     </p>
                     <div class="ctaBtns">
                         <MainLink
                             v-if="!user"
                             :link="route('user.login')"
-                            text="Créer mon compte entreprise"
+                            text="Se connecter"
                         />
+                        <a v-if="!user" href="#request-service" class="ctaGhost">
+                            Demander un accès
+                        </a>
                         <MainLink
                             v-else
                             :link="dashboardRoute"
@@ -540,24 +562,16 @@ const toggleFaq = (i) => {
             </div>
         </section>
 
-        <!-- FOOTER -->
         <footer class="landingFooter">
             <div class="footerInner">
                 <div class="footerBrand">
                     <div class="brandLogo">
                         <div class="logoMark">
-                            <span class="material-symbols-rounded"
-                                >qr_code_2</span
-                            >
+                            <span class="material-symbols-rounded">qr_code_2</span>
                         </div>
-                        <span class="logoText"
-                            >QR<span class="weight-thin">Coded</span></span
-                        >
+                        <span class="logoText">QR<span class="weight-thin">Coded</span></span>
                     </div>
-                    <p>
-                        Infrastructure de présence pour les entreprises
-                        modernes.
-                    </p>
+                    <p>Infrastructure de présence pour les entreprises modernes.</p>
                 </div>
                 <div class="footerLinks">
                     <a href="#features">Fonctionnalités</a>
@@ -575,9 +589,6 @@ const toggleFaq = (i) => {
 <style scoped lang="scss">
 @import url("https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap");
 
-/* ===========================
-   DESIGN TOKENS
-   =========================== */
 .homePage {
     --bg: #0a0a0f;
     --surface: #111118;
@@ -590,7 +601,6 @@ const toggleFaq = (i) => {
     --accent: #4f7cff;
     --accent-dim: rgba(79, 124, 255, 0.15);
     --accent-glow: rgba(79, 124, 255, 0.35);
-    --gold: #e8a030;
     --green: #22c97a;
     --amber: #f5a623;
     --purple: #a78bfa;
@@ -605,7 +615,6 @@ const toggleFaq = (i) => {
 * {
     box-sizing: border-box;
 }
-
 
 .heroSection {
     position: relative;
@@ -628,11 +637,7 @@ const toggleFaq = (i) => {
         linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
         linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
     background-size: 40px 40px;
-    mask-image: radial-gradient(
-        ellipse 80% 60% at 50% 0%,
-        black 0%,
-        transparent 100%
-    );
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 0%, transparent 100%);
 }
 
 .glowOrb {
@@ -689,13 +694,8 @@ const toggleFaq = (i) => {
 }
 
 @keyframes blink {
-    0%,
-    100% {
-        opacity: 1;
-    }
-    50% {
-        opacity: 0.3;
-    }
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
 }
 
 h1.heroTitle {
@@ -726,6 +726,25 @@ h1.heroTitle {
     flex-wrap: wrap;
 }
 
+.outlineBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: all 0.15s;
+    &:hover {
+        color: var(--text-primary);
+        border-color: var(--accent);
+        background: var(--accent-dim);
+    }
+}
+
 .ghostBtn {
     display: inline-flex;
     align-items: center;
@@ -740,7 +759,6 @@ h1.heroTitle {
     }
 }
 
-/* DASHBOARD MOCKUP */
 .dashMockup {
     background: var(--surface);
     border: 1px solid var(--border-strong);
@@ -759,294 +777,250 @@ h1.heroTitle {
     padding: 12px 16px;
     border-bottom: 1px solid var(--border);
     background: var(--surface2);
+}
 
-    .mockDots {
-        display: flex;
-        gap: 5px;
-        span {
-            width: 9px;
-            height: 9px;
-            border-radius: 50%;
-            &:nth-child(1) {
-                background: #ff5f57;
-            }
-            &:nth-child(2) {
-                background: #febc2e;
-            }
-            &:nth-child(3) {
-                background: #28c840;
-            }
-        }
+.mockDots {
+    display: flex;
+    gap: 6px;
+    span {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--border-strong);
     }
-    .mockUrl {
-        flex: 1;
-        background: rgba(255, 255, 255, 0.06);
-        border-radius: 4px;
-        padding: 4px 10px;
-        font-size: 10px;
-        color: var(--text-muted);
-        font-family: "DM Mono", monospace;
-    }
-    .mockStatus {
-        display: flex;
-        align-items: center;
-        gap: 5px;
-        font-size: 10px;
-        color: var(--green);
-        font-weight: 600;
-        .pulse {
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background: var(--green);
-            animation: blink 2s ease infinite;
-        }
+}
+
+.mockUrl {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 4px 12px;
+    font-family: "DM+Mono", monospace;
+    font-size: 11px;
+    color: var(--text-secondary);
+    text-align: center;
+}
+
+.mockStatus {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--green);
+    .pulse {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--green);
+        box-shadow: 0 0 8px var(--green);
     }
 }
 
 .mockBody {
     display: flex;
-    height: 320px;
+    height: 340px;
 }
 
 .mockSidebar {
-    width: 44px;
+    width: 50px;
     background: var(--surface2);
     border-right: 1px solid var(--border);
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 12px 0;
-    gap: 4px;
+    padding: 16px 0;
+    gap: 16px;
+}
 
-    .mockSideItem {
-        width: 32px;
-        height: 32px;
-        border-radius: 6px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        span {
-            font-size: 16px;
-            color: var(--text-muted);
-        }
-        &.active {
-            background: var(--accent-dim);
-            span {
-                color: var(--accent);
-            }
-        }
-    }
+.mockSideItem {
+    color: var(--text-muted);
+    cursor: pointer;
+    span { font-size: 18px; }
+    &.active { color: var(--accent); }
 }
 
 .mockContent {
     flex: 1;
-    padding: 14px;
-    overflow: hidden;
+    padding: 20px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 16px;
+    overflow: hidden;
 }
 
 .mockTopRow {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 8px;
+    gap: 12px;
 }
 
 .mockStatCard {
+    background: var(--surface2);
+    border: 1px solid var(--border);
     border-radius: 8px;
-    padding: 10px 12px;
+    padding: 12px;
     display: flex;
     flex-direction: column;
-    gap: 3px;
-    &.stat1 {
-        background: rgba(34, 201, 122, 0.1);
-    }
-    &.stat2 {
-        background: rgba(245, 166, 35, 0.1);
-    }
-    &.stat3 {
-        background: rgba(79, 124, 255, 0.1);
-    }
     .statVal {
-        font-size: 20px;
+        font-size: 18px;
         font-weight: 700;
-        color: var(--text-primary);
-        letter-spacing: -0.5px;
     }
     .statLabel {
-        font-size: 9px;
-        color: var(--text-muted);
-        line-height: 1.3;
+        font-size: 10px;
+        color: var(--text-secondary);
+        margin-top: 2px;
     }
+    &.stat1 .statVal { color: var(--green); }
+    &.stat2 .statVal { color: var(--amber); }
 }
 
 .mockChart {
-    background: rgba(255, 255, 255, 0.02);
+    background: var(--surface2);
     border: 1px solid var(--border);
     border-radius: 8px;
-    padding: 10px 12px;
-    .chartLabel {
-        font-size: 10px;
-        color: var(--text-muted);
-        margin-bottom: 8px;
-    }
-    .chartBars {
-        display: flex;
-        align-items: flex-end;
-        gap: 5px;
-        height: 52px;
-    }
+    padding: 12px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.chartLabel {
+    font-size: 10px;
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.chartBars {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    height: 60px;
+    padding-top: 10px;
     .bar {
-        flex: 1;
-        background: rgba(79, 124, 255, 0.4);
-        border-radius: 3px 3px 0 0;
+        width: 24px;
+        background: var(--border-strong);
         height: var(--h);
+        border-radius: 3px 3px 0 0;
         position: relative;
         display: flex;
-        align-items: flex-end;
         justify-content: center;
         span {
-            font-size: 8px;
-            color: var(--text-muted);
             position: absolute;
-            bottom: -14px;
-            font-family: "DM Mono", monospace;
+            bottom: -16px;
+            font-size: 9px;
+            color: var(--text-muted);
         }
         &.active {
             background: var(--accent);
+            box-shadow: 0 0 12px var(--accent-dim);
+            span {
+                color: var(--text-primary);
+                font-weight: 600;
+            }
         }
-        &.dim {
-            background: rgba(255, 255, 255, 0.08);
-        }
+        &.dim { opacity: 0.4; }
     }
 }
 
 .mockEmployeeList {
     display: flex;
     flex-direction: column;
-    gap: 6px;
-    margin-top: 4px;
+    gap: 8px;
 }
 
 .empRow {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.01);
+    padding: 6px;
+    border-radius: 6px;
 }
 
 .empAvatar {
-    width: 26px;
-    height: 26px;
+    width: 24px;
+    height: 24px;
     border-radius: 50%;
     font-size: 9px;
     font-weight: 700;
     display: flex;
     align-items: center;
     justify-content: center;
-    flex-shrink: 0;
-    &.a1 {
-        background: rgba(167, 139, 250, 0.2);
-        color: #a78bfa;
-    }
-    &.a2 {
-        background: rgba(245, 166, 35, 0.2);
-        color: #f5a623;
-    }
-    &.a3 {
-        background: rgba(34, 201, 122, 0.2);
-        color: #22c97a;
-    }
+    color: #fff;
+    &.a1 { background: #4f7cff; }
+    &.a2 { background: #f5a623; }
+    &.a3 { background: #10b981; }
 }
 
 .empInfo {
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 1px;
-    .empName {
-        font-size: 11px;
-        font-weight: 600;
-        color: var(--text-primary);
-    }
-    .empTime {
-        font-size: 9px;
-        color: var(--text-muted);
-        font-family: "DM Mono", monospace;
-    }
+    .empName { font-size: 11px; font-weight: 600; }
+    .empTime { font-size: 9px; color: var(--text-muted); }
 }
 
 .empBadge {
     font-size: 9px;
-    font-weight: 700;
-    padding: 2px 7px;
+    font-weight: 600;
+    padding: 2px 6px;
     border-radius: 4px;
     &.on-time {
-        background: rgba(34, 201, 122, 0.15);
+        background: rgba(34, 199, 122, 0.1);
         color: var(--green);
     }
     &.late {
-        background: rgba(245, 166, 35, 0.15);
+        background: rgba(245, 166, 35, 0.1);
         color: var(--amber);
     }
 }
 
-/* ===========================
-   METRICS
-   =========================== */
 .metricsSection {
     border-top: 1px solid var(--border);
     border-bottom: 1px solid var(--border);
-    padding: 48px 24px;
-    background: var(--surface);
+    background: #0d0d14;
 }
 
 .metricsInner {
-    max-width: 1000px;
+    max-width: 1200px;
     margin: 0 auto;
+    padding: 32px 24px;
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    justify-content: center;
+    gap: 24px;
+    flex-wrap: wrap;
 }
 
 .metricItem {
     flex: 1;
-    text-align: center;
+    min-width: 200px;
     .metricNum {
-        font-size: 36px;
+        font-size: 32px;
         font-weight: 800;
-        letter-spacing: -1.5px;
         color: var(--text-primary);
-        line-height: 1;
-        margin-bottom: 6px;
+        letter-spacing: -1px;
     }
     .metricDesc {
         font-size: 12px;
-        color: var(--text-muted);
-        font-weight: 500;
-        line-height: 1.4;
+        color: var(--text-secondary);
+        margin-top: 4px;
     }
 }
 
 .metricDivider {
     width: 1px;
     height: 40px;
-    background: var(--border-strong);
-    flex-shrink: 0;
-    margin: 0 8px;
-}
-
-/* ===========================
-   FEATURES
-   =========================== */
-.featuresSection {
-    padding: 100px 24px;
+    background: var(--border);
 }
 
 .sectionContainer {
     max-width: 1200px;
     margin: 0 auto;
+    padding: 100px 24px;
 }
 
 .sectionLabel {
@@ -1055,16 +1029,15 @@ h1.heroTitle {
     letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--accent);
-    margin-bottom: 16px;
+    margin-bottom: 12px;
 }
 
 .sectionTitle {
-    font-size: clamp(28px, 4vw, 44px);
+    font-size: clamp(28px, 4vw, 42px);
     font-weight: 800;
-    letter-spacing: -1.5px;
-    line-height: 1.1;
+    line-height: 1.2;
+    letter-spacing: -1px;
     margin: 0 0 56px;
-    color: var(--text-primary);
     em {
         font-style: normal;
         color: var(--accent);
@@ -1074,117 +1047,73 @@ h1.heroTitle {
 .featuresGrid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    grid-template-rows: auto auto;
-    gap: 16px;
+    gap: 24px;
 }
 
 .featureCard {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 12px;
-    padding: 28px;
-    position: relative;
-    overflow: hidden;
-    transition:
-        border-color 0.2s,
-        transform 0.2s;
-
+    padding: 32px;
+    transition: border-color 0.2s, transform 0.2s;
     &:hover {
         border-color: var(--border-strong);
         transform: translateY(-2px);
     }
-
+    h3 {
+        font-size: 18px;
+        font-weight: 700;
+        margin: 0 0 12px;
+    }
+    p {
+        font-size: 13px;
+        color: var(--text-secondary);
+        line-height: 1.6;
+        margin: 0;
+    }
     &.large {
         grid-column: span 2;
         display: flex;
-        gap: 28px;
-        align-items: flex-start;
-        background: linear-gradient(
-            135deg,
-            var(--surface) 0%,
-            rgba(79, 124, 255, 0.08) 100%
-        );
-        border-color: rgba(79, 124, 255, 0.2);
+        gap: 32px;
+        align-items: center;
+        position: relative;
+        overflow: hidden;
         .featureBody {
             flex: 1;
+            position: relative;
+            z-index: 2;
         }
-        .featureAccent {
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 200px;
-            height: 200px;
-            background: radial-gradient(
-                circle,
-                rgba(79, 124, 255, 0.12) 0%,
-                transparent 70%
-            );
-            pointer-events: none;
-        }
-    }
-
-    .featureIcon {
-        width: 44px;
-        height: 44px;
-        border-radius: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-bottom: 20px;
-        background: var(--accent-dim);
-        flex-shrink: 0;
-        span {
-            font-size: 20px;
-            color: var(--accent);
-        }
-        &.amber {
-            background: rgba(245, 166, 35, 0.12);
-            span {
-                color: var(--amber);
-            }
-        }
-        &.blue {
-            background: rgba(79, 124, 255, 0.12);
-            span {
-                color: #7ba3ff;
-            }
-        }
-        &.green {
-            background: rgba(34, 201, 122, 0.12);
-            span {
-                color: var(--green);
-            }
-        }
-        &.purple {
-            background: rgba(167, 139, 250, 0.12);
-            span {
-                color: var(--purple);
-            }
-        }
-    }
-
-    h3 {
-        font-size: 16px;
-        font-weight: 700;
-        margin: 0 0 10px;
-        color: var(--text-primary);
-        letter-spacing: -0.3px;
-    }
-    p {
-        font-size: 13.5px;
-        color: var(--text-secondary);
-        line-height: 1.65;
-        margin: 0;
     }
 }
 
-/* ===========================
-   WORKFLOW
-   =========================== */
+.featureIcon {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    background: var(--accent-dim);
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 24px;
+    span { font-size: 24px; }
+    &.amber { background: rgba(245, 166, 23, 0.1); color: var(--amber); }
+    &.blue { background: rgba(79, 124, 255, 0.1); color: var(--accent); }
+    &.green { background: rgba(34, 199, 122, 0.1); color: var(--green); }
+    &.purple { background: rgba(167, 139, 250, 0.1); color: var(--purple); }
+}
+
+.featureCard.large .featureIcon {
+    margin-bottom: 0;
+    width: 64px;
+    height: 64px;
+    span { font-size: 32px; }
+}
+
 .workflowSection {
-    padding: 100px 24px;
-    background: var(--surface);
+    background: #07070c;
     border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
 }
 
 .workflowGrid {
@@ -1197,8 +1126,8 @@ h1.heroTitle {
 .workflowIntro {
     font-size: 15px;
     color: var(--text-secondary);
-    line-height: 1.7;
-    margin: 0 0 40px;
+    line-height: 1.6;
+    margin: -32px 0 40px;
 }
 
 .rolesStack {
@@ -1208,132 +1137,90 @@ h1.heroTitle {
 
 .roleItem {
     display: flex;
-    gap: 16px;
+    gap: 20px;
     align-items: flex-start;
-}
-
-.roleLine {
-    width: 1px;
-    height: 24px;
-    background: var(--border-strong);
-    margin: 6px 0 6px 19px;
 }
 
 .roleIconWrap {
     width: 40px;
     height: 40px;
-    border-radius: 10px;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    border: 1px solid var(--border);
-    span {
-        font-size: 18px;
-    }
-    &.gold {
-        background: rgba(232, 160, 48, 0.1);
-        span {
-            color: var(--gold);
-        }
-    }
+    span { font-size: 20px; }
     &.dark {
         background: rgba(255, 255, 255, 0.05);
-        span {
-            color: var(--text-primary);
-        }
+        color: var(--text-primary);
+        border: 1px solid var(--border);
     }
     &.blue {
-        background: var(--accent-dim);
-        span {
-            color: var(--accent);
-        }
+        background: rgba(79, 124, 255, 0.1);
+        color: var(--accent);
     }
 }
 
 .roleContent {
     h4 {
-        font-size: 14px;
-        font-weight: 700;
+        font-size: 15px;
+        font-weight: 600;
         margin: 0 0 4px;
-        color: var(--text-primary);
-        letter-spacing: -0.2px;
     }
     p {
         font-size: 13px;
         color: var(--text-secondary);
-        line-height: 1.6;
+        line-height: 1.5;
         margin: 0;
     }
 }
 
+.roleLine {
+    width: 1px;
+    height: 32px;
+    background: var(--border);
+    margin-left: 20px;
+}
+
 .orgChart {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 40px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 32px;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 16px;
 }
 
 .orgNode {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    padding: 12px 20px;
-    border-radius: 10px;
-    font-size: 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border-strong);
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 13px;
     font-weight: 600;
-    border: 1px solid var(--border);
-    text-align: center;
+    display: flex;
+    align-items: center;
+    gap: 8px;
     position: relative;
-    span.material-symbols-rounded {
-        font-size: 18px;
-        margin-bottom: 2px;
+    span { font-size: 16px; color: var(--accent); }
+    .nodeTag {
+        position: absolute;
+        top: -10px;
+        right: 10px;
+        font-size: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        background: var(--border-strong);
+        color: var(--text-primary);
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-weight: 700;
+        &.mid { background: var(--accent); color: #fff; }
     }
     &.root {
-        background: var(--accent);
-        border-color: var(--accent);
-        color: #fff;
-        min-width: 200px;
-        span.material-symbols-rounded {
-            color: rgba(255, 255, 255, 0.8);
-        }
-    }
-    &.mid {
-        background: var(--surface2);
-        color: var(--text-primary);
-        min-width: 130px;
-        span.material-symbols-rounded {
-            color: var(--text-secondary);
-        }
-    }
-    &.leaf {
-        background: rgba(79, 124, 255, 0.08);
-        color: var(--text-secondary);
-        min-width: 110px;
-        border-color: rgba(79, 124, 255, 0.15);
-        span.material-symbols-rounded {
-            color: var(--accent);
-            font-size: 14px;
-        }
-    }
-}
-
-.nodeTag {
-    font-size: 9px;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    background: rgba(255, 255, 255, 0.15);
-    color: rgba(255, 255, 255, 0.7);
-    padding: 2px 8px;
-    border-radius: 4px;
-    &.mid {
-        background: rgba(79, 124, 255, 0.15);
-        color: var(--accent);
+        border-color: var(--border-strong);
+        span { color: var(--purple); }
     }
 }
 
@@ -1343,26 +1230,19 @@ h1.heroTitle {
     align-items: center;
     width: 100%;
 }
+
 .orgBranchLine {
     width: 1px;
-    height: 20px;
+    height: 32px;
     background: var(--border-strong);
 }
 
 .orgChildren {
-    display: flex;
-    gap: 24px;
-    align-items: flex-start;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
     position: relative;
-    &::before {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: calc(25% + 12px);
-        right: calc(25% + 12px);
-        height: 1px;
-        background: var(--border-strong);
-    }
+    gap: 20px;
 }
 
 .orgChildWrap {
@@ -1374,212 +1254,334 @@ h1.heroTitle {
 .orgLeaves {
     display: flex;
     flex-direction: column;
+    gap: 8px;
     align-items: center;
+    width: 100%;
+    margin-top: 24px;
+    position: relative;
     &::before {
         content: "";
         width: 1px;
-        height: 16px;
+        height: 24px;
         background: var(--border-strong);
-        display: block;
+        position: absolute;
+        top: -24px;
+    }
+    .leaf {
+        font-weight: 400;
+        color: var(--text-secondary);
+        border-color: var(--border);
+        width: 100%;
+        max-width: 160px;
+        justify-content: center;
+        span { color: var(--text-muted); }
+        &.style-admin {
+            border-color: rgba(79, 124, 255, 0.3);
+            font-weight: 500;
+            color: var(--text-primary);
+            span { color: var(--accent); }
+        }
     }
 }
 
-/* ===========================
-   FAQ
-   =========================== */
-.faqSection {
-    padding: 100px 24px;
-    border-top: 1px solid var(--border);
+.serviceRequestSection {
+    background: linear-gradient(180deg, var(--bg) 0%, var(--surface) 50%, var(--bg) 100%);
+    border-bottom: 1px solid var(--border);
+    position: relative;
+}
+
+.requestGrid {
+    display: grid;
+    grid-template-columns: 1fr 1.1fr;
+    gap: 80px;
+    align-items: center;
+}
+
+.requestIntro {
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--text-secondary);
+    margin: -32px 0 32px;
+}
+
+.noticeBox {
+    background: rgba(79, 124, 255, 0.05);
+    border: 1px solid rgba(79, 124, 255, 0.15);
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+}
+
+.noticeIcon {
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-top: 2px;
+    span { font-size: 22px; }
+}
+
+.noticeText {
+    font-size: 13px;
+    line-height: 1.6;
+    color: #b0c2e2;
+}
+
+.requestFormContainer {
+    background: var(--surface2);
+    border: 1px solid var(--border-strong);
+    border-radius: 16px;
+    padding: 40px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+.interactiveForm {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.formRow {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.formGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    label {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-primary);
+        letter-spacing: 0.03em;
+    }
+    input, textarea {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 14px 16px;
+        color: var(--text-primary);
+        font-family: "Sora", sans-serif;
+        font-size: 14px;
+        transition: all 0.2s ease;
+        &:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-dim);
+            background: rgba(10, 10, 15, 0.5);
+        }
+        &::placeholder { color: var(--text-muted); }
+    }
+    textarea {
+        resize: none;
+        &::-webkit-scrollbar { width: 8px; }
+        &::-webkit-scrollbar-track { background: transparent; }
+        &::-webkit-scrollbar-thumb {
+            background: var(--border-strong);
+            border-radius: 4px;
+            border: 2px solid var(--surface);
+        }
+        &::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+    }
+}
+
+.submitRequestBtn {
+    background: var(--accent);
+    border: none;
+    border-radius: 8px;
+    color: #ffffff;
+    font-family: "Sora", sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-top: 8px;
+    span { display: inline-flex; align-items: center; }
+    &:hover {
+        background: #3b66f3;
+        box-shadow: 0 0 20px var(--accent-glow);
+        transform: translateY(-1px);
+    }
+    &:active { transform: translateY(0); }
 }
 
 .faqGrid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
+    max-width: 760px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
 }
 
 .faqCard {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 10px;
-    overflow: hidden;
+    padding: 24px;
     cursor: pointer;
     transition: border-color 0.15s;
-    &:hover,
+    &:hover { border-color: var(--border-strong); }
     &.open {
-        border-color: var(--border-strong);
-    }
-    &.open .faqToggle {
-        transform: rotate(45deg);
-        background: var(--accent-dim);
-        border-color: rgba(79, 124, 255, 0.2);
-        svg path {
-            stroke: var(--accent);
+        border-color: rgba(79, 124, 255, 0.3);
+        .faqToggle {
+            transform: rotate(45deg);
+            color: var(--accent);
         }
-    }
-    &.open .faqAnswer {
-        max-height: 200px;
-        padding: 0 20px 16px;
+        .faqAnswer {
+            max-height: 200px;
+            margin-top: 16px;
+            opacity: 1;
+        }
     }
 }
 
 .faqQuestion {
     display: flex;
-    align-items: center;
     justify-content: space-between;
-    gap: 12px;
-    padding: 16px 20px;
-    span {
-        font-size: 14px;
-        font-weight: 600;
-        color: var(--text-primary);
-        line-height: 1.4;
-    }
+    align-items: center;
+    gap: 24px;
+    font-size: 15px;
+    font-weight: 600;
 }
 
 .faqToggle {
-    width: 28px;
-    height: 28px;
-    border-radius: 6px;
-    border: 1px solid var(--border);
+    color: var(--text-muted);
+    transition: transform 0.2s, color 0.2s;
     display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    transition: all 0.2s;
-    svg path {
-        stroke: var(--text-muted);
-    }
 }
 
 .faqAnswer {
     max-height: 0;
+    opacity: 0;
     overflow: hidden;
-    transition:
-        max-height 0.3s ease,
-        padding 0.3s ease;
+    transition: max-height 0.2s ease, margin 0.2s ease, opacity 0.2s ease;
     p {
-        font-size: 13px;
+        font-size: 13.5px;
         color: var(--text-secondary);
-        line-height: 1.65;
+        line-height: 1.6;
         margin: 0;
-        border-top: 1px solid var(--border);
-        padding-top: 14px;
     }
 }
 
-/* ===========================
-   CTA
-   =========================== */
 .ctaSection {
-    padding: 80px 24px;
-    position: relative;
-    overflow: hidden;
+    padding: 80px 24px 120px;
 }
 
 .ctaInner {
     max-width: 1200px;
     margin: 0 auto;
+    background: #0d0d15;
+    border: 1px solid var(--border-strong);
+    border-radius: 20px;
+    padding: 80px 24px;
+    text-align: center;
     position: relative;
+    overflow: hidden;
+    box-shadow: 0 30px 60px rgba(0, 0, 0, 0.4);
 }
 
 .ctaBg {
     position: absolute;
     inset: 0;
-    border-radius: 20px;
-    background: var(--surface);
-    border: 1px solid rgba(79, 124, 255, 0.2);
-    overflow: hidden;
-    .ctaGlow {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 600px;
-        height: 400px;
-        background: radial-gradient(
-            ellipse,
-            rgba(79, 124, 255, 0.15) 0%,
-            transparent 70%
-        );
-    }
+    pointer-events: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.ctaGlow {
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(79, 124, 255, 0.15) 0%, transparent 70%);
+    filter: blur(50px);
 }
 
 .ctaContent {
     position: relative;
-    padding: 80px 48px;
-    text-align: center;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    z-index: 2;
+    max-width: 540px;
+    margin: 0 auto;
     .ctaEyebrow {
         font-size: 11px;
         font-weight: 700;
-        letter-spacing: 0.1em;
         text-transform: uppercase;
         color: var(--accent);
-        margin-bottom: 20px;
+        letter-spacing: 0.1em;
+        margin-bottom: 16px;
     }
     h2 {
-        font-size: clamp(32px, 4vw, 52px);
+        font-size: clamp(28px, 4vw, 40px);
         font-weight: 800;
-        letter-spacing: -2px;
-        line-height: 1.1;
+        letter-spacing: -1px;
+        line-height: 1.15;
         margin: 0 0 16px;
-        color: var(--text-primary);
-        em {
-            font-style: normal;
-            color: var(--accent);
-        }
+        em { font-style: normal; color: var(--accent); }
     }
     p {
-        font-size: 15px;
+        font-size: 14px;
         color: var(--text-secondary);
-        max-width: 480px;
-        line-height: 1.65;
-        margin: 0 0 36px;
+        line-height: 1.6;
+        margin: 0 0 32px;
     }
 }
 
-/* ===========================
-   FOOTER
-   =========================== */
+.ctaBtns {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+}
+
+.ctaGhost {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 15px;
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: all 0.15s;
+    &:hover {
+        color: var(--text-primary);
+        border-color: var(--accent);
+        background: var(--accent-dim);
+    }
+}
 .landingFooter {
     border-top: 1px solid var(--border);
-    background: var(--surface);
-    padding: 48px 24px 32px;
+    background: #06060a;
 }
 
 .footerInner {
     max-width: 1200px;
-    margin: 0 auto 32px;
+    margin: 0 auto;
+    padding: 64px 24px 48px;
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    .footerBrand {
-        p {
-            font-size: 13px;
-            color: var(--text-muted);
-            margin: 12px 0 0;
-            max-width: 260px;
-            line-height: 1.5;
-        }
-    }
-    .footerLinks {
-        display: flex;
-        gap: 28px;
-        align-items: center;
-        margin-top: 4px;
-        a {
-            font-size: 13px;
-            color: var(--text-muted);
-            text-decoration: none;
-            transition: color 0.15s;
-            font-weight: 500;
-            &:hover {
-                color: var(--text-secondary);
-            }
-        }
+    gap: 40px;
+}
+
+.footerBrand {
+    max-width: 320px;
+    p {
+        font-size: 12px;
+        color: var(--text-muted);
+        line-height: 1.5;
+        margin: 12px 0 0;
     }
 }
 
@@ -1587,74 +1589,87 @@ h1.heroTitle {
     display: flex;
     align-items: center;
     gap: 10px;
-    .logoMark {
-        width: 32px;
-        height: 32px;
-        background: #4f7cff;
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        span {
-            font-size: 17px;
-            color: #fff;
-        }
-    }
-    .logoText {
-        font-size: 16px;
-        font-weight: 700;
-        letter-spacing: -0.3px;
-        color: var(--text-primary);
-    }
+}
+
+.logoMark {
+    width: 28px;
+    height: 28px;
+    background: var(--accent);
+    color: #fff;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    span { font-size: 18px; }
+}
+
+.logoText {
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
     .weight-thin {
         font-weight: 300;
         color: var(--text-secondary);
     }
 }
 
+.footerLinks {
+    display: flex;
+    gap: 32px;
+    a {
+        font-size: 13px;
+        color: var(--text-secondary);
+        text-decoration: none;
+        transition: color 0.15s;
+        &:hover { color: var(--text-primary); }
+    }
+}
+
 .footerBottom {
     max-width: 1200px;
     margin: 0 auto;
-    border-top: 1px solid var(--border);
-    padding-top: 20px;
+    padding: 24px 24px 40px;
+    border-top: 1px solid rgba(255, 255, 255, 0.03);
     p {
-        font-size: 12px;
+        font-size: 11px;
         color: var(--text-muted);
         margin: 0;
     }
 }
 
-/* ===========================
-   RESPONSIVE
-   =========================== */
-@media (max-width: 960px) {
+@media (max-width: 968px) {
+    .heroInner,
+    .featuresGrid,
+    .workflowGrid,
+    .requestGrid {
+        grid-template-columns: 1fr;
+    }
     .heroInner {
-        grid-template-columns: 1fr;
-        padding: 40px 24px 60px;
-        gap: 48px;
+        text-align: center;
+        padding-top: 40px;
     }
-    .workflowGrid {
-        grid-template-columns: 1fr;
+    .heroSub {
+        margin-left: auto;
+        margin-right: auto;
     }
-    .featuresGrid {
-        grid-template-columns: 1fr;
+    .heroCtas {
+        justify-content: center;
     }
-    .featuresGrid .featureCard.large {
+    .featureCard.large {
         grid-column: span 1;
         flex-direction: column;
+        align-items: flex-start;
+        gap: 20px;
     }
-    .faqGrid {
+    .orgChildren {
         grid-template-columns: 1fr;
     }
-    .metricsInner {
-        flex-wrap: wrap;
-        gap: 32px;
-        .metricDivider {
-            display: none;
-        }
-        .metricItem {
-            flex: 0 0 calc(50% - 16px);
-        }
+    .workflowGrid,
+    .requestGrid {
+        gap: 40px;
+    }
+    .requestFormContainer {
+        padding: 30px 24px;
     }
     .footerInner {
         flex-direction: column;
@@ -1662,19 +1677,9 @@ h1.heroTitle {
     }
 }
 
-@media (max-width: 640px) {
-    .heroInner {
-        padding: 32px 20px 60px;
-    }
-    h1.heroTitle {
-        font-size: 36px;
-        letter-spacing: -1px;
-    }
-    .metricsInner .metricItem {
-        flex: 0 0 100%;
-    }
-    .ctaContent {
-        padding: 48px 24px;
+@media (max-width: 480px) {
+    .formRow {
+        grid-template-columns: 1fr;
     }
 }
 </style>

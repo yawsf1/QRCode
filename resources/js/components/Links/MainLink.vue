@@ -30,21 +30,21 @@ defineProps({
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    height: 36px; /* Compact height */
-    padding: 0 16px; /* Reduced side real-estate */
+    height: 36px; 
+    padding: 0 16px; 
     background: var(--accent);
     color: #ffffff;
-    border-radius: 8px; /* Tighter radius for a sharper profile */
+    border-radius: 8px; 
     border: none;
     cursor: pointer;
     font-family: "Sora", sans-serif;
-    font-weight: 600; /* Sophisticated medium weight */
-    font-size: 12.5px; /* Scaled down typography */
+    font-weight: 600; 
+    font-size: 12.5px; 
     letter-spacing: 0.01em;
     text-decoration: none;
     box-shadow:
         0 2px 10px rgba(0, 0, 0, 0.2),
-        0 0 0 1px var(--border-glow); /* Controlled micro-glow */
+        0 0 0 1px var(--border-glow); 
     transition:
         background-color 0.15s ease,
         transform 0.1s ease,

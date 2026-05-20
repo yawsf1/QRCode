@@ -1,15 +1,17 @@
 <script setup>
 import { useForm, usePage } from "@inertiajs/vue3";
-import { computed } from "vue";
+import { computed, watch } from "vue";
 import { route } from "ziggy-js";
+import RegistrationVerificationModal from "../../components/Auth/RegistrationVerificationModal.vue";
 import MainButton from "../../components/Buttons/MainButton.vue";
-import SmallMainLink from "../../components/Links/SmallMainLink.vue";
 import SmallSecondaryLink from "../../components/Links/SmallSecondaryLink.vue";
+import { useRegistrationVerification } from "../../composables/useRegistrationVerification";
 
 const form = useForm({
     nom: "",
     prenom: "",
     email: "",
+    verification_code: "",
     password: "",
     departement: "",
     telephone: "",
@@ -18,6 +20,17 @@ const form = useForm({
     heure_fin: "",
     jours_ouvres: [],
     tolerance_retard: "",
+});
+
+const {
+    showModal,
+    modalError,
+    startVerification,
+    closeModal,
+    confirmRegistration,
+} = useRegistrationVerification({
+    sendRoute: route("register.employe.verification.send"),
+    registerRoute: route("admin.employe.register"),
 });
 
 const daysOfWeek = [
@@ -32,12 +45,25 @@ const daysOfWeek = [
 
 const errors = computed(() => usePage().props.errors);
 
+watch(
+    () => form.email,
+    () => {
+        if (showModal.value) {
+            closeModal(form);
+        }
+    },
+);
+
+const submitLabel = computed(() => {
+    if (form.processing && !showModal.value) {
+        return "Vérification du formulaire…";
+    }
+
+    return "Ajouter l'employé";
+});
+
 function register() {
-    form.post(route("admin.employe.register"), {
-        onSuccess: () => {
-            form.reset();
-        },
-    });
+    startVerification(form);
 }
 </script>
 
@@ -50,7 +76,7 @@ function register() {
         </div>
 
         <div class="scrollWorkspace">
-            <div class="card">
+            <div class="card" :class="{ isDimmed: showModal }">
                 <div class="topSection">
                     <SmallSecondaryLink
                         :link="route('admin.dashboard')"
@@ -94,7 +120,8 @@ function register() {
                             <input
                                 type="email"
                                 v-model="form.email"
-                                placeholder="Email"
+                                placeholder="adresse@exemple.com"
+                                autocomplete="email"
                             />
                             <p v-if="errors.email" class="error">
                                 {{ errors.email }}
@@ -215,16 +242,26 @@ function register() {
                         <MainButton
                             type="submit"
                             :disabled="form.processing"
-                            :text="
-                                form.processing
-                                    ? 'Ajout en cours...'
-                                    : 'Ajouter'
-                            "
+                            :text="submitLabel"
                         />
                     </div>
                 </form>
             </div>
         </div>
+
+        <RegistrationVerificationModal
+            :open="showModal"
+            :email="form.email"
+            :verification-code="form.verification_code"
+            :loading="form.processing"
+            :sending-code="false"
+            :error="modalError || errors.verification_code"
+            @close="closeModal(form)"
+            @confirm="confirmRegistration(form)"
+            @update:verification-code="
+                (value) => (form.verification_code = value)
+            "
+        />
     </div>
 </template>
 
@@ -248,13 +285,12 @@ function register() {
 
     font-family: "Sora", sans-serif;
     width: 100%;
-    height: 100%; /* Matches MainLayout height frame flawlessly */
+    height: 100%; 
     background: var(--bg);
     position: relative;
-    overflow: hidden; /* Stops layout engine structural bleed out leaking */
+    overflow: hidden; 
 }
 
-/* Background Micro-patterns & Glow Orbs */
 .bg {
     position: absolute;
     inset: 0;
@@ -304,13 +340,12 @@ function register() {
     }
 }
 
-/* Isolated Scrollable Area to support smaller screen layout bounds */
 .scrollWorkspace {
     width: 100%;
     height: 100%;
     display: flex;
     justify-content: center;
-    align-items: flex-start; /* Keeps padding proportional when scrolled down */
+    align-items: flex-start; 
     padding: 40px 24px;
     overflow-y: auto;
     z-index: 10;
@@ -331,7 +366,16 @@ function register() {
     border-radius: 20px;
     padding: 36px;
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-    margin-bottom: 20px; /* Safety tracking spacing at absolute scroll base */
+    margin-bottom: 20px;
+    transition:
+        opacity 0.25s ease,
+        filter 0.25s ease;
+
+    &.isDimmed {
+        opacity: 0.35;
+        pointer-events: none;
+        filter: blur(1px);
+    }
 }
 
 .title {
@@ -348,7 +392,6 @@ function register() {
     margin: 0 0 32px 0;
 }
 
-/* FORM STRUCTURAL RULES */
 .form {
     display: flex;
     flex-direction: column;
@@ -361,7 +404,6 @@ function register() {
     gap: 18px;
 }
 
-/* INPUT LABELS AND ARCHITECTURE */
 .field {
     display: flex;
     flex-direction: column;
@@ -388,7 +430,6 @@ label {
     font-weight: 700;
 }
 
-/* PREMIUM FORM INPUT ELEMENT STYLES */
 input {
     width: 100%;
     padding: 12px 16px;
@@ -415,6 +456,17 @@ input {
         filter: invert(0.9);
         cursor: pointer;
     }
+
+    &[type="number"] {
+        -moz-appearance: textfield;
+        appearance: textfield;
+
+        &::-webkit-outer-spin-button,
+        &::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+    }
 }
 
 .error {
@@ -424,7 +476,6 @@ input {
     margin: 4px 0 0 0;
 }
 
-/* PILLET LUXURY CUSTOM CHECKBOX GROUPS */
 .checkboxGroup {
     display: flex;
     flex-wrap: wrap;
@@ -463,13 +514,11 @@ input {
     display: none;
 }
 
-/* ACTION ROW BUTTON CONTAINER */
 .actionRow {
     margin-top: 12px;
     width: 100%;
 }
 
-/* RESPONSIVE FLUID MEDIA MATCHES */
 @media (max-width: 768px) {
     .grid {
         grid-template-columns: 1fr;

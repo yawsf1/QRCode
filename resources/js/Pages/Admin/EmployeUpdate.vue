@@ -270,7 +270,6 @@ function update() {
     line-height: 1.5;
 }
 
-/* FORM */
 .form {
     display: flex;
     flex-direction: column;
@@ -283,7 +282,6 @@ function update() {
     gap: 16px;
 }
 
-/* FIELD */
 .field {
     display: flex;
     flex-direction: column;
@@ -314,7 +312,6 @@ label {
     font-weight: 700;
 }
 
-/* INPUTS */
 input {
     width: 100%;
     padding: 12px 16px;
@@ -338,10 +335,21 @@ input {
         box-shadow: 0 0 0 1px var(--accent);
     }
 
-    /* Dark variant setup for time elements */
+    
     &[type="time"]::-webkit-calendar-picker-indicator {
         filter: invert(0.9);
         cursor: pointer;
+    }
+
+    &[type="number"] {
+        -moz-appearance: textfield;
+        appearance: textfield;
+
+        &::-webkit-outer-spin-button,
+        &::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
     }
 }
 
@@ -352,7 +360,6 @@ input {
     font-weight: 500;
 }
 
-/* CUSTOM CHECKBOX PILLS */
 .checkboxGroup {
     display: flex;
     flex-wrap: wrap;
@@ -419,7 +426,6 @@ input {
     }
 }
 
-/* MOBILE RESPONSIVE CLOSURES */
 @media (max-width: 768px) {
     .grid {
         grid-template-columns: 1fr;

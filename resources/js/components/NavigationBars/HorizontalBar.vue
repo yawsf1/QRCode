@@ -1,6 +1,7 @@
 <script setup>
-import { Link, useForm, usePage } from "@inertiajs/vue3";
+import { useForm, usePage } from "@inertiajs/vue3";
 import { computed, ref, onMounted, onUnmounted } from "vue";
+import AppBrand from "../Layout/AppBrand.vue";
 
 const form = useForm({});
 const page = usePage();
@@ -22,15 +23,10 @@ onUnmounted(() => window.removeEventListener("scroll", handleScroll));
 <template>
     <header class="navbar" :class="{ scrolled: isScrolled }">
         <div class="navInner">
-            <!-- Brand -->
-            <Link href="/" class="brand">
-                <div class="logoMark">
-                    <span class="material-symbols-rounded">qr_code_2</span>
-                </div>
-                <span class="logoText">QR<span class="thin">Coded</span></span>
-            </Link>
+            
+            <AppBrand />
 
-            <!-- Actions -->
+            
             <div class="navActions">
                 <button
                     v-if="user"
@@ -82,48 +78,6 @@ onUnmounted(() => window.removeEventListener("scroll", handleScroll));
     justify-content: space-between;
 }
 
-/* BRAND */
-.brand {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    text-decoration: none;
-
-    .logoMark {
-        width: 32px;
-        height: 32px;
-        background: #4f7cff;
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: background 0.2s;
-
-        span {
-            font-size: 17px;
-            color: #fff;
-        }
-    }
-
-    &:hover .logoMark {
-        background: #6b93ff;
-    }
-
-    .logoText {
-        font-family: "Sora", sans-serif;
-        font-size: 16px;
-        font-weight: 700;
-        letter-spacing: -0.3px;
-        color: #f0f0f8;
-    }
-
-    .thin {
-        font-weight: 300;
-        color: #8888aa;
-    }
-}
-
-/* ACTIONS */
 .navActions {
     display: flex;
     align-items: center;

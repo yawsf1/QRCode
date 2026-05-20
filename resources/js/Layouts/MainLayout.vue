@@ -1,10 +1,12 @@
 <script setup>
-import HorizonatlBar from "../components/NavigationBars/HorizonatlBar.vue";
+import HorizontalBar from "../components/NavigationBars/HorizontalBar.vue";
+import GlobalLoadingBar from "../components/Ui/GlobalLoadingBar.vue";
 </script>
 
 <template>
     <div class="layout-container">
-        <HorizonatlBar />
+        <GlobalLoadingBar />
+        <HorizontalBar />
         <main class="main">
             <slot />
         </main>
@@ -13,11 +15,14 @@ import HorizonatlBar from "../components/NavigationBars/HorizonatlBar.vue";
 
 <style lang="scss" scoped>
 .layout-container {
+    --layout-header-offset: 60px;
     display: flex;
     flex-direction: column;
     min-height: 100vh;
     width: 100%;
+    max-width: 100vw;
     background-color: #0a0a0f;
+    overflow-x: hidden;
 }
 
 .main {
@@ -26,7 +31,7 @@ import HorizonatlBar from "../components/NavigationBars/HorizonatlBar.vue";
     flex-grow: 1;
     display: flex;
     flex-direction: column;
-    overflow: visible;
+    overflow-x: hidden;
     background-color: #0a0a0f;
 }
 </style>

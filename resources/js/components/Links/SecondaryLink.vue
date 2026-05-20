@@ -33,11 +33,11 @@ defineProps({
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    height: 36px; /* Coordinates identically with MainLink dimensions */
+    height: 36px; 
     padding: 0 16px;
     background: var(--surface-tint);
     color: var(--text);
-    border-radius: 8px; /* Matching profile radius sharpness */
+    border-radius: 8px; 
     border: 1px solid var(--border);
     cursor: pointer;
     font-family: "Sora", sans-serif;

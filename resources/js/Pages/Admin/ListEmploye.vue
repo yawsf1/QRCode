@@ -57,7 +57,7 @@ const form = useForm({
 const showDeleteModal = ref(false);
 
 function deleteEmploye() {
-    form.delete(route("employe.delete", form.employeId), {
+    form.delete(route("admin.employe.delete", form.employeId), {
         onSuccess: () => {
             showDeleteModal.value = false;
         },
@@ -268,7 +268,6 @@ function showEmploye(id) {
     flex-direction: column;
 }
 
-/* Modal Windows */
 .modalOverlay {
     position: fixed;
     top: 0;
@@ -355,7 +354,6 @@ function showEmploye(id) {
     }
 }
 
-/* Header Content Action Row */
 .topSection {
     display: flex;
     justify-content: space-between;
@@ -439,7 +437,6 @@ function showEmploye(id) {
     gap: 12px;
 }
 
-/* Datagrid Layout Panel */
 .tableWrapper {
     background: var(--surface);
     border-radius: 16px;
@@ -507,7 +504,6 @@ th {
     gap: 8px;
 }
 
-/* Button UI Actions Row */
 .tableViewBtn,
 .tableEditBtn,
 .tableDeleteBtn {
@@ -560,7 +556,6 @@ th {
     }
 }
 
-/* Status Flags */
 .statusBadge {
     display: inline-flex;
     align-items: center;
@@ -585,7 +580,6 @@ th {
     font-weight: 500;
 }
 
-/* Balanced Bottom Pagination Row Placement */
 .pagination {
     display: flex;
     justify-content: center;
@@ -627,7 +621,6 @@ th {
     }
 }
 
-/* Responsive Structures */
 @media (max-width: 1024px) {
     .topSection {
         flex-direction: column;

@@ -22,9 +22,8 @@ function formatDate(date) {
     });
 }
 
-// Stacking matching structural arrays for ChartJS
 const chartData = computed(() => ({
-    labels: ["À l'heure", "En retard", "Départs Anticipés", "Absences"],
+    labels: ["À l'heure", "En retard", "En avance", "Absences"],
     datasets: [
         {
             data: [
@@ -94,6 +93,13 @@ function handleFormDelete() {
 function navigateToEdit() {
     router.get(route("employe.update.form", props.employe.id));
 }
+
+function exportRapport(type) {
+    window.location.href = route("admin.employe.rapport", {
+        user: props.employe.id,
+        type,
+    });
+}
 </script>
 
 <template>
@@ -126,6 +132,10 @@ function navigateToEdit() {
                 />
             </div>
             <div class="controlCluster">
+                <button class="actionBtn export" @click="exportRapport('mensuel')">
+                    <span class="material-symbols-rounded">download</span>
+                    Rapport mensuel
+                </button>
                 <button class="actionBtn edit" @click="navigateToEdit">
                     <span class="material-symbols-rounded">edit</span>Modifier
                 </button>
@@ -205,7 +215,7 @@ function navigateToEdit() {
                     </div>
                     <div class="metricCell early">
                         <span class="num">{{ stats.early ?? 0 }}</span>
-                        <span class="lbl">Départs Anticipés</span>
+                        <span class="lbl">En avance</span>
                     </div>
                     <div class="metricCell absent">
                         <span class="num">{{ stats.absent ?? 0 }}</span>
@@ -295,7 +305,7 @@ function navigateToEdit() {
     display: flex;
     flex-direction: column;
     gap: 32px;
-    overflow-x: hidden; /* Prevent horizontal spilling canvas broadside */
+    overflow-x: hidden; 
 }
 
 .actionRibbon {
@@ -348,6 +358,14 @@ function navigateToEdit() {
         }
     }
 
+    &.export {
+        color: var(--text-primary);
+        &:hover {
+            border-color: rgba(79, 124, 255, 0.4);
+            background: rgba(79, 124, 255, 0.1);
+        }
+    }
+
     &.delete {
         border-color: rgba(255, 107, 107, 0.2);
         color: var(--error);
@@ -361,7 +379,7 @@ function navigateToEdit() {
 
 .profileLayout {
     display: grid;
-    grid-template-columns: 300px minmax(0, 1fr); /* Added minmax(0, 1fr) to allow child scaling inside tracks */
+    grid-template-columns: 300px minmax(0, 1fr); 
     gap: 40px;
     align-items: start;
     width: 100%;
@@ -448,7 +466,7 @@ function navigateToEdit() {
                 font-size: 13px;
                 color: var(--text-primary);
                 font-weight: 500;
-                word-break: break-all; /* Prevents overflow of massive text/emails string blocks */
+                word-break: break-all; 
             }
 
             .systemStatus {
@@ -474,7 +492,7 @@ function navigateToEdit() {
     grid-template-columns: repeat(
         5,
         minmax(0, 1fr)
-    ); /* Force columns to share identical spaces strictly */
+    ); 
     background: var(--surface);
     border: 1px solid var(--border-strong);
     border-radius: 16px;
@@ -548,7 +566,7 @@ function navigateToEdit() {
 .canvasWrapper {
     height: 220px;
     width: 100%;
-    position: relative; /* Fixed relative bounds initialization context for chart generation scaling */
+    position: relative; 
     display: flex;
     align-items: center;
     justify-content: center;
@@ -603,7 +621,6 @@ function navigateToEdit() {
     }
 }
 
-/* Modal and Popups styling */
 .dialogOverlay {
     position: fixed;
     top: 0;

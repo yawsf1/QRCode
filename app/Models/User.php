@@ -2,7 +2,10 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Models\Presence;
+use App\Support\AppCache;
+use App\Support\CacheKeys;
+use Carbon\Carbon;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -10,7 +13,6 @@ use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
     protected $fillable = [
@@ -23,6 +25,7 @@ class User extends Authenticatable
         'role',
         'est_actif',
         'admin_id',
+        'email_verified_at',
     ];
 
     protected $hidden = [
@@ -39,27 +42,45 @@ class User extends Authenticatable
         ];
     }
 
-
-    public function isAdmin() : bool {
+    public function isAdmin(): bool
+    {
         return $this->role === 'admin';
     }
-    public function isEmploye() : bool {
+
+    public function isEmploye(): bool
+    {
         return $this->role === 'employe';
     }
-    public function isSuperAdmin() : bool {
+
+    public function isSuperAdmin(): bool
+    {
         return $this->role === 'super_admin';
+    }
+
+    public function hasCheckedInToday(): bool
+    {
+        $today = Carbon::today()->toDateString();
+        $cacheKey = CacheKeys::userScannedToday($this->id, $today);
+
+        if (AppCache::has($cacheKey)) {
+            return true;
+        }
+
+        return Presence::where('user_id', $this->id)
+            ->whereDate('date_heure_scan', Carbon::today())
+            ->where('statut', '!=', 'absent')
+            ->exists();
     }
 
     public function horaire()
     {
         return $this->hasOne(Horaire::class);
     }
+
     public function presences()
     {
         return $this->hasMany(Presence::class);
     }
-
-
 
     public function admin()
     {
@@ -71,23 +92,22 @@ class User extends Authenticatable
         return $this->hasMany(User::class, 'admin_id');
     }
 
-
-
     public function scopeFilter($query, array $filters)
-        {
-            return $query
-                ->when($filters['search'] ?? null, function ($query, $search) {
-                    $query->where(function ($q) use ($search) {
-                        $q->where('nom', 'ilike', "{$search}%")
+    {
+        return $query
+            ->when($filters['search'] ?? null, function ($query, $search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('nom', 'ilike', "{$search}%")
                         ->orWhere('prenom', 'ilike', "{$search}%")
                         ->orWhere('email', 'like', "{$search}%");
-                    });
-                })
-                ->when(isset($filters['status']), function ($query) use ($filters) {
-                    $query->where('est_actif', $filters['status']);
                 });
-        }
-        public function scopeSortBy($query, $sort = 'recent')
+            })
+            ->when(isset($filters['status']), function ($query) use ($filters) {
+                $query->where('est_actif', $filters['status']);
+            });
+    }
+
+    public function scopeSortBy($query, $sort = 'recent')
     {
         return match ($sort) {
             'employees' => $query->orderBy('employes_count', 'desc'),

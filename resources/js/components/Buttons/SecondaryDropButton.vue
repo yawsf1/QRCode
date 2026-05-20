@@ -51,7 +51,7 @@ const rotate = ref(false);
     letter-spacing: 0.01em;
     white-space: nowrap;
     user-select: none;
-    gap: 8px; /* Smooth gap between text and arrow indicator */
+    gap: 8px; 
     transition:
         background-color 0.15s ease,
         border-color 0.15s ease,

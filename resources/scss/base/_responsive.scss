@@ -1,0 +1,69 @@
+@use "variables" as *;
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html {
+    -webkit-text-size-adjust: 100%;
+}
+
+img,
+video,
+canvas,
+svg {
+    max-width: 100%;
+    height: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.dashboardPage,
+.dashboard,
+.scanner-mobile-viewport,
+.workspaceCanvas {
+    max-width: 100vw;
+    overflow-x: hidden;
+}
+
+@media (max-width: 1024px) {
+    .dashboard-grid,
+    .chartsGrid,
+    .executiveSummaryGrid,
+    .kpiRow {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .headerFlexRow,
+    .pageHeader,
+    .chartHeader,
+    .chartCardHeader,
+    .actionRibbon {
+        flex-direction: column;
+        align-items: stretch !important;
+        gap: 12px;
+    }
+
+    .statSummaryContainer {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .tableWrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+@media (max-width: 480px) {
+    .kpiRow {
+        grid-template-columns: 1fr 1fr !important;
+    }
+}

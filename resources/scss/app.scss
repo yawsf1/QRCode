@@ -1,6 +1,7 @@
 @use "./base/reset";
 @use "./base/variables";
 @use "./base/global";
+@use "./base/responsive";
 
 // Add component-level SCSS imports below as your project grows:
 // @use './components/button';
@@ -9,11 +10,10 @@
 body {
     width: 100%;
     min-height: 100vh;
-    display: flex;
-    align-items: center;
-
-    justify-content: center;
+    margin: 0;
 }
+
 #app {
     width: 100%;
+    min-height: 100vh;
 }

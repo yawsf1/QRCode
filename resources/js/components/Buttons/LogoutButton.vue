@@ -29,7 +29,7 @@ defineProps({
     padding: 0 16px;
     background: var(--accent);
     color: #ffffff;
-    border-radius: 8px; /* Consistent sharp look */
+    border-radius: 8px; 
     border: none;
     cursor: pointer;
     font-family: "Sora", sans-serif;
@@ -38,7 +38,7 @@ defineProps({
     letter-spacing: 0.01em;
     white-space: nowrap;
     user-select: none;
-    gap: 8px; /* Balanced icon-to-text spacing */
+    gap: 8px; 
     box-shadow:
         0 2px 10px rgba(0, 0, 0, 0.2),
         0 0 0 1px var(--border-glow);
@@ -48,7 +48,7 @@ defineProps({
         transform 0.1s ease;
 
     .material-symbols-rounded {
-        font-size: 18px; /* Clean scale profile fit */
+        font-size: 18px; 
         display: flex;
         align-items: center;
     }

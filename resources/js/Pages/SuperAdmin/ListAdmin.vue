@@ -113,7 +113,7 @@ function deleteAdminWithId(adminId) {
 
                 <div class="filtering">
                     <SecondaryButton
-                        text="No. Employee"
+                        text="Nb. employés"
                         :class="{ 'filter-active': sortBy === 'employees' }"
                         @click="sortBy = 'employees'"
                     />
@@ -133,7 +133,7 @@ function deleteAdminWithId(adminId) {
 
                     <MainLink
                         :link="route('super-admin.dashboard')"
-                        text="← Dashboard"
+                        text="← Tableau de bord"
                     />
                 </div>
             </div>
@@ -256,7 +256,6 @@ function deleteAdminWithId(adminId) {
     box-sizing: border-box;
 }
 
-/* CONFIRMATION OVERLAYS */
 .modalOverlay {
     position: fixed;
     top: 0;
@@ -342,7 +341,6 @@ function deleteAdminWithId(adminId) {
     }
 }
 
-/* TOP STRUCTURE BAR */
 .topSection {
     display: flex;
     justify-content: space-between;
@@ -419,7 +417,6 @@ function deleteAdminWithId(adminId) {
     align-items: center;
 }
 
-/* DATATABLE WRAPPER OBJECTS */
 .tableWrapper {
     background: var(--surface);
     border: 1px solid var(--border-strong);
@@ -558,7 +555,6 @@ tbody {
     font-weight: 500;
 }
 
-/* PAGINATION ARCHITECTURE CONTAINER */
 .pagination {
     display: flex;
     justify-content: center;
@@ -598,7 +594,6 @@ tbody {
     }
 }
 
-/* MOBILE DISPLAY BREAKPOINTS QUERY RESPONSIVENESS */
 @media (max-width: 850px) {
     .containerOfList {
         padding: 24px 16px;

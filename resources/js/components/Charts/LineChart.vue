@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from "vue";
+import { computed, onMounted, onUnmounted, ref } from "vue";
 import { Line } from "vue-chartjs";
 import {
     Chart as ChartJS,
@@ -29,14 +29,27 @@ const props = defineProps({
         type: Array,
         required: true,
     },
-    // We now accept a pre-formatted array of datasets for complete control
     datasets: {
         type: Array,
         required: true,
     },
 });
 
-// Format datasets with high-fidelity defaults while preserving custom backend styling
+const isMobile = ref(false);
+
+const updateBreakpoint = () => {
+    isMobile.value = window.innerWidth < 768;
+};
+
+onMounted(() => {
+    updateBreakpoint();
+    window.addEventListener("resize", updateBreakpoint);
+});
+
+onUnmounted(() => {
+    window.removeEventListener("resize", updateBreakpoint);
+});
+
 const chartData = computed(() => ({
     labels: props.labels,
     datasets: props.datasets.map((dataset) => ({
@@ -46,8 +59,6 @@ const chartData = computed(() => ({
         borderWidth: 3,
         tension: 0.35,
         fill: true,
-
-        // Advanced Dynamic Linear Gradient for multi-lines
         backgroundColor: (context) => {
             const chart = context.chart;
             const { ctx, chartArea } = chart;
@@ -59,11 +70,10 @@ const chartData = computed(() => ({
                 0,
                 chartArea.bottom,
             );
-            gradient.addColorStop(0, `${dataset.color}25`); // Lower opacity to avoid color mixing clutter
+            gradient.addColorStop(0, `${dataset.color}25`);
             gradient.addColorStop(1, `${dataset.color}00`);
             return gradient;
         },
-
         pointBackgroundColor: "#ffffff",
         pointBorderColor: dataset.color,
         pointBorderWidth: 2,
@@ -76,24 +86,24 @@ const chartData = computed(() => ({
     })),
 }));
 
-const chartOptions = {
+const chartOptions = computed(() => ({
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
         legend: {
-            display: true, // Set to true now to differentiate multiple lines
-            position: "top",
-            align: "end",
+            display: true,
+            position: isMobile.value ? "bottom" : "top",
+            align: isMobile.value ? "center" : "end",
             labels: {
                 boxWidth: 12,
                 usePointStyle: true,
                 pointStyle: "circle",
                 font: {
-                    size: 12,
+                    size: isMobile.value ? 10 : 12,
                     family: "'Inter', sans-serif",
                     weight: "500",
                 },
-                padding: 20,
+                padding: isMobile.value ? 12 : 20,
             },
         },
         tooltip: {
@@ -126,8 +136,10 @@ const chartOptions = {
             grid: { display: false },
             ticks: {
                 color: "#64748b",
+                maxRotation: isMobile.value ? 45 : 0,
+                minRotation: isMobile.value ? 45 : 0,
                 font: {
-                    size: 11,
+                    size: isMobile.value ? 9 : 11,
                     family: "'Inter', sans-serif",
                     weight: "500",
                 },
@@ -139,7 +151,7 @@ const chartOptions = {
             grid: { color: "#f1f5f9" },
             ticks: {
                 color: "#64748b",
-                font: { size: 11, family: "'Inter', sans-serif" },
+                font: { size: isMobile.value ? 9 : 11, family: "'Inter', sans-serif" },
                 stepSize: 1,
                 precision: 0,
             },
@@ -148,16 +160,13 @@ const chartOptions = {
     },
     interaction: {
         intersect: false,
-        mode: "index", // Tooltip displays BOTH users data when hovering an index column
+        mode: "index",
     },
-};
+}));
 </script>
 
 <template>
-    <div
-        class="chart-container"
-        style="position: relative; height: 340px; width: 100%"
-    >
+    <div class="chart-container">
         <Line
             v-if="props.labels.length > 0"
             :data="chartData"
@@ -171,6 +180,13 @@ const chartOptions = {
 </template>
 
 <style scoped>
+.chart-container {
+    position: relative;
+    width: 100%;
+    height: clamp(220px, 45vw, 340px);
+    min-height: 220px;
+}
+
 .empty-state {
     display: flex;
     flex-direction: column;
@@ -179,5 +195,12 @@ const chartOptions = {
     height: 100%;
     color: #94a3b8;
     gap: 8px;
+}
+
+@media (max-width: 768px) {
+    .chart-container {
+        height: clamp(200px, 55vw, 280px);
+        min-height: 200px;
+    }
 }
 </style>

@@ -18,7 +18,7 @@ defineProps({
 
 .mainButton {
     --accent: #4f7cff;
-    --accent-hover: #3b66eb; /* Darker, richer tone for clean hover states */
+    --accent-hover: #3b66eb; 
 
     display: inline-flex;
     align-items: center;
@@ -28,7 +28,7 @@ defineProps({
     padding: 0 24px;
     background: var(--accent);
     color: #ffffff;
-    border-radius: 12px; /* Matches input corner curves */
+    border-radius: 12px; 
     border: none;
     cursor: pointer;
     font-family: "Sora", sans-serif;
@@ -37,14 +37,14 @@ defineProps({
     letter-spacing: 0.01em;
     white-space: nowrap;
     user-select: none;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15); /* Flat, subtle depth drop shadow */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15); 
     transition:
         background-color 0.15s ease,
         transform 0.1s ease;
 
     &:hover {
         background-color: var(--accent-hover);
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15); /* Maintains a clean matte profile */
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15); 
     }
 
     &:active {

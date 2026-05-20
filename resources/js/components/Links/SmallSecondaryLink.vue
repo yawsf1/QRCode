@@ -33,16 +33,16 @@ defineProps({
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    height: 32px; /* Marginally shorter for that precise 0.7rem structural scale */
+    height: 32px; 
     padding: 0 12px;
     background: var(--surface-tint);
     color: var(--text);
-    border-radius: 6px; /* Slightly tighter curve radius to complement scale down */
+    border-radius: 6px; 
     border: 1px solid var(--border);
     cursor: pointer;
     font-family: "Sora", sans-serif;
     font-weight: 600;
-    font-size: 11.5px; /* Aligns exactly with your layout's micro-labeling systems */
+    font-size: 11.5px; 
     letter-spacing: 0.01em;
     text-decoration: none;
     white-space: nowrap;

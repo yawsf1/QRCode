@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from "vue";
+import { computed, onMounted, onUnmounted, ref } from "vue";
 import { Pie } from "vue-chartjs";
 import { Chart as ChartJS, Title, Tooltip, Legend, ArcElement } from "chart.js";
 
@@ -18,6 +18,21 @@ const props = defineProps({
         type: String,
         default: "employés",
     },
+});
+
+const isMobile = ref(false);
+
+const updateBreakpoint = () => {
+    isMobile.value = window.innerWidth < 768;
+};
+
+onMounted(() => {
+    updateBreakpoint();
+    window.addEventListener("resize", updateBreakpoint);
+});
+
+onUnmounted(() => {
+    window.removeEventListener("resize", updateBreakpoint);
 });
 
 const pieColors = ["#4f46e5", "#06b6d4", "#10b981", "#f59e0b", "#ec4899"];
@@ -42,18 +57,18 @@ const chartOptions = computed(() => ({
     plugins: {
         legend: {
             display: true,
-            position: "right",
+            position: isMobile.value ? "bottom" : "right",
             align: "center",
             labels: {
                 boxWidth: 12,
                 usePointStyle: true,
                 pointStyle: "circle",
                 font: {
-                    size: 12,
+                    size: isMobile.value ? 10 : 12,
                     family: "'Inter', sans-serif",
                     weight: "500",
                 },
-                padding: 16,
+                padding: isMobile.value ? 10 : 16,
             },
         },
         tooltip: {
@@ -92,10 +107,7 @@ const chartOptions = computed(() => ({
 </script>
 
 <template>
-    <div
-        class="chart-container"
-        style="position: relative; height: 300px; width: 100%"
-    >
+    <div class="chart-container">
         <Pie
             v-if="props.labels.length > 0"
             :data="chartData"
@@ -109,6 +121,13 @@ const chartOptions = computed(() => ({
 </template>
 
 <style scoped>
+.chart-container {
+    position: relative;
+    width: 100%;
+    height: clamp(240px, 50vw, 320px);
+    min-height: 240px;
+}
+
 .empty-state {
     display: flex;
     flex-direction: column;
@@ -117,5 +136,12 @@ const chartOptions = computed(() => ({
     height: 100%;
     color: #94a3b8;
     gap: 8px;
+}
+
+@media (max-width: 768px) {
+    .chart-container {
+        height: clamp(260px, 60vw, 300px);
+        min-height: 260px;
+    }
 }
 </style>

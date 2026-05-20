@@ -1,48 +1,177 @@
 <script setup>
 import { route } from "ziggy-js";
-import { router, Link } from "@inertiajs/vue3";
+import { router, Link, usePage } from "@inertiajs/vue3";
 import LineChart from "../../components/Charts/LineChart.vue";
 import PieChart from "../../components/Charts/PieChart.vue";
-import { computed } from "vue";
+import AppBrand from "../../components/Layout/AppBrand.vue";
+import DashboardMobileNav from "../../components/Layout/DashboardMobileNav.vue";
+import { useUiStore } from "../../stores/ui";
+import { computed, ref, onMounted, onUnmounted, watch } from "vue";
+
+const ui = useUiStore();
 
 const props = defineProps({
-    history: Array,
-    checkedInToday: Boolean,
-    stats: Object,
-    chartData: Object,
-    pieLabels: Array,
-    pieCounts: Array,
+    history: { type: Array, default: () => [] },
+    checkedInToday: { type: Boolean, default: false },
+    stats: {
+        type: Object,
+        default: () => ({
+            total_days: 0,
+            punctuality_rate: "100%",
+            late_days: 0,
+            absent_days: 0,
+            ontime_count: 0,
+            early_count: 0,
+        }),
+    },
+    chartData: {
+        type: Object,
+        default: () => ({ labels: [], delays: [] }),
+    },
+    pieLabels: { type: Array, default: () => [] },
+    pieCounts: { type: Array, default: () => [0, 0, 0, 0] },
 });
+
+const page = usePage();
+
+const syncFromServer = () => {
+    liveCheckedInToday.value =
+        page.props.checkedInToday ?? props.checkedInToday;
+    liveHistory.value = [...(props.history || [])];
+    liveStats.value = { ...(props.stats || {}) };
+    livePieCounts.value = [...(props.pieCounts || [0, 0, 0, 0])];
+    liveChartData.value = {
+        labels: props.chartData?.labels || [],
+        delays: props.chartData?.delays || [],
+    };
+};
+
+const liveCheckedInToday = ref(props.checkedInToday);
+const liveHistory = ref([...(props.history || [])]);
+const liveStats = ref({ ...(props.stats || {}) });
+const livePieCounts = ref([...(props.pieCounts || [0, 0, 0, 0])]);
+const liveChartData = ref({
+    labels: props.chartData?.labels || [],
+    delays: props.chartData?.delays || [],
+});
+
+watch(
+    () => [
+        props.history,
+        props.stats,
+        props.checkedInToday,
+        props.chartData,
+        props.pieCounts,
+    ],
+    () => syncFromServer(),
+    { deep: true },
+);
 
 const handleLogout = () => {
     router.post(route("logout"));
 };
 
+onMounted(() => {
+    syncFromServer();
+
+    const currentUserId = page.props?.auth?.user?.id;
+
+    window.Echo.channel("attendance-channel").listen(".checked-in", (e) => {
+        const newScan = e.presence;
+
+        if (
+            !currentUserId ||
+            Number(newScan.user_id) !== Number(currentUserId)
+        ) {
+            return;
+        }
+
+        liveCheckedInToday.value = true;
+
+        const formattedLog = {
+            id: newScan.id,
+            statut: newScan.statut,
+            date: new Date(newScan.date_heure_scan).toLocaleDateString(
+                "fr-MA",
+                { day: "2-digit", month: "long", year: "numeric" },
+            ),
+            heure: new Date(newScan.date_heure_scan).toLocaleTimeString(
+                "fr-MA",
+                { hour: "2-digit", minute: "2-digit", second: "2-digit" },
+            ),
+            ecart: parseInt(newScan.ecart_minutes || 0),
+        };
+
+        liveHistory.value.unshift(formattedLog);
+        if (liveHistory.value.length > 7) {
+            liveHistory.value.pop();
+        }
+
+        liveStats.value.total_days++;
+
+        if (newScan.statut === "a_lheure") {
+            livePieCounts.value[0]++;
+            liveStats.value.ontime_count++;
+        } else if (newScan.statut === "en_avance") {
+            livePieCounts.value[1]++;
+            liveStats.value.early_count++;
+        } else if (newScan.statut === "en_retard") {
+            livePieCounts.value[2]++;
+            liveStats.value.late_days++;
+
+            const todayIndex = liveChartData.value.delays.length - 1;
+            if (todayIndex >= 0) {
+                liveChartData.value.delays[todayIndex] = parseInt(
+                    newScan.ecart_minutes || 0,
+                );
+            }
+        } else if (newScan.statut === "absent") {
+            livePieCounts.value[3]++;
+            liveStats.value.absent_days++;
+        }
+
+        const activePresenceDays =
+            liveStats.value.total_days - liveStats.value.absent_days;
+        const positivePoints =
+            (liveStats.value.ontime_count || 0) +
+            (liveStats.value.early_count || 0);
+        if (activePresenceDays > 0) {
+            liveStats.value.punctuality_rate =
+                ((positivePoints / activePresenceDays) * 100).toFixed(1) + "%";
+        }
+    });
+});
+
+onUnmounted(() => {
+    window.Echo.leaveChannel("attendance-channel");
+});
+
 const chartDatasets = computed(() => [
     {
         label: "Minutes de retard",
-        data: props.chartData?.delays || [],
+        data: liveChartData.value?.delays || [],
         color: "#4f7cff",
     },
 ]);
 
 const totalLateMinutesThisWeek = computed(() => {
-    return (props.chartData?.delays || []).reduce((acc, curr) => acc + curr, 0);
+    return (liveChartData.value?.delays || []).reduce(
+        (acc, curr) => acc + curr,
+        0,
+    );
 });
 </script>
 
 <template>
     <div class="dashboard">
-        <aside class="sidebar">
+        <div
+            v-if="ui.mobileSidebarOpen"
+            class="sidebarBackdrop"
+            @click="ui.closeMobileSidebar()"
+        ></div>
+        <aside class="sidebar" :class="{ open: ui.mobileSidebarOpen }">
             <div class="sidebarTop">
-                <div class="brand">
-                    <div class="logoMark">
-                        <span class="material-symbols-rounded">qr_code_2</span>
-                    </div>
-                    <span class="logoText"
-                        >QR<span class="thin">Coded</span></span
-                    >
-                </div>
+                <AppBrand class="sidebarBrand" />
 
                 <div class="sidebarSection">
                     <span class="sectionLabel">Espace Employé</span>
@@ -54,7 +183,7 @@ const totalLateMinutesThisWeek = computed(() => {
                         Tableau de bord
                     </button>
                     <Link
-                        v-if="!props.checkedInToday"
+                        v-if="!liveCheckedInToday"
                         :href="route('employe.scan.form')"
                         class="navBtn scan"
                     >
@@ -65,6 +194,11 @@ const totalLateMinutesThisWeek = computed(() => {
                     </Link>
                 </div>
             </div>
+
+            <button class="logoutBtn" @click="handleLogout">
+                <span class="material-symbols-rounded">logout</span>
+                Déconnexion
+            </button>
         </aside>
 
         <main class="content">
@@ -76,6 +210,7 @@ const totalLateMinutesThisWeek = computed(() => {
                     </p>
                 </div>
                 <div class="headerRight">
+                    <DashboardMobileNav />
                     <div class="todayBadge">
                         <span class="material-symbols-rounded">today</span>
                         {{
@@ -92,15 +227,15 @@ const totalLateMinutesThisWeek = computed(() => {
             <section
                 class="statusCard"
                 :class="{
-                    done: props.checkedInToday,
-                    pending: !props.checkedInToday,
+                    done: liveCheckedInToday,
+                    pending: !liveCheckedInToday,
                 }"
             >
                 <div class="statusLeft">
                     <div class="statusIconWrap">
                         <span class="material-symbols-rounded">
                             {{
-                                props.checkedInToday
+                                liveCheckedInToday
                                     ? "verified"
                                     : "pending_actions"
                             }}
@@ -109,21 +244,21 @@ const totalLateMinutesThisWeek = computed(() => {
                     <div class="statusText">
                         <h2>
                             {{
-                                props.checkedInToday
+                                liveCheckedInToday
                                     ? "Présence enregistrée"
                                     : "Pointage requis"
                             }}
                         </h2>
                         <p>
                             {{
-                                props.checkedInToday
+                                liveCheckedInToday
                                     ? "Votre journée de travail a été validée avec succès."
                                     : "Veuillez scanner le code QR de la borne de votre administrateur."
                             }}
                         </p>
                     </div>
                 </div>
-                <div v-if="props.checkedInToday" class="statusBadge">
+                <div v-if="liveCheckedInToday" class="statusBadge">
                     <span class="material-symbols-rounded">check_circle</span>
                     En règle aujourd'hui
                 </div>
@@ -144,7 +279,7 @@ const totalLateMinutesThisWeek = computed(() => {
                     </span>
                     <div>
                         <div class="kpiVal">
-                            {{ props.stats?.total_days || 0 }}
+                            {{ liveStats?.total_days || 0 }}
                         </div>
                         <div class="kpiLabel">Jours pointés</div>
                     </div>
@@ -169,7 +304,7 @@ const totalLateMinutesThisWeek = computed(() => {
                     </span>
                     <div>
                         <div class="kpiVal">
-                            {{ props.stats?.punctuality_rate || "100%" }}
+                            {{ liveStats?.punctuality_rate || "100%" }}
                         </div>
                         <div class="kpiLabel">Taux de ponctualité</div>
                     </div>
@@ -180,7 +315,7 @@ const totalLateMinutesThisWeek = computed(() => {
                     </span>
                     <div>
                         <div class="kpiVal">
-                            {{ props.stats?.absent_days || 0 }}
+                            {{ liveStats?.absent_days || 0 }}
                         </div>
                         <div class="kpiLabel">Absences</div>
                     </div>
@@ -203,7 +338,7 @@ const totalLateMinutesThisWeek = computed(() => {
                     </div>
                     <div class="chartWrap">
                         <LineChart
-                            :labels="props.chartData?.labels || []"
+                            :labels="liveChartData?.labels || []"
                             :datasets="chartDatasets"
                         />
                     </div>
@@ -212,14 +347,14 @@ const totalLateMinutesThisWeek = computed(() => {
                 <div class="chartCard">
                     <div class="chartCardHeader">
                         <div>
-                            <span class="chartTag">Statistiques globales</span>
-                            <h3 class="chartTitle">Répartition ponctualité</h3>
+                            <span class="chartTag">Mon historique</span>
+                            <h3 class="chartTitle">Répartition de mes pointages</h3>
                         </div>
                     </div>
                     <div class="chartWrap">
                         <PieChart
                             :labels="props.pieLabels || []"
-                            :employeeCounts="props.pieCounts || []"
+                            :employeeCounts="livePieCounts"
                             suffix="jour(s)"
                         />
                     </div>
@@ -232,7 +367,7 @@ const totalLateMinutesThisWeek = computed(() => {
                     <h4>Historique récent des pointages</h4>
                 </div>
 
-                <div v-if="props.history.length === 0" class="emptyState">
+                <div v-if="liveHistory.length === 0" class="emptyState">
                     <span class="material-symbols-rounded">rule</span>
                     <p>
                         Aucun enregistrement de présence trouvé pour le moment.
@@ -241,7 +376,7 @@ const totalLateMinutesThisWeek = computed(() => {
 
                 <div v-else class="historyList">
                     <div
-                        v-for="log in props.history"
+                        v-for="log in liveHistory"
                         :key="log.id"
                         class="historyItem"
                     >
@@ -319,7 +454,7 @@ const totalLateMinutesThisWeek = computed(() => {
     font-family: "Sora", sans-serif;
     display: flex;
     width: 100%;
-    min-height: calc(100vh - 60px);
+    min-height: 100vh;
     background: var(--bg);
     color: var(--text-primary);
 }
@@ -328,9 +463,10 @@ const totalLateMinutesThisWeek = computed(() => {
     box-sizing: border-box;
 }
 
-/* ===========================
-   SIDEBAR
-   =========================== */
+.sidebarBackdrop {
+    display: none;
+}
+
 .sidebar {
     width: 224px;
     flex-shrink: 0;
@@ -341,8 +477,8 @@ const totalLateMinutesThisWeek = computed(() => {
     justify-content: space-between;
     padding: 20px 12px;
     position: sticky;
-    top: 60px;
-    height: calc(100vh - 60px);
+    top: 0;
+    height: 100vh;
 }
 
 .sidebarTop {
@@ -351,35 +487,8 @@ const totalLateMinutesThisWeek = computed(() => {
     gap: 28px;
 }
 
-.brand {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 4px 8px;
-
-    .logoMark {
-        width: 32px;
-        height: 32px;
-        background: var(--accent);
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        span {
-            font-size: 17px;
-            color: #fff;
-        }
-    }
-    .logoText {
-        font-size: 16px;
-        font-weight: 700;
-        letter-spacing: -0.3px;
-        color: var(--text-primary);
-    }
-    .thin {
-        font-weight: 300;
-        color: var(--text-secondary);
-    }
+.sidebarBrand {
+    margin-bottom: 4px;
 }
 
 .sidebarSection {
@@ -475,9 +584,6 @@ const totalLateMinutesThisWeek = computed(() => {
     }
 }
 
-/* ===========================
-   MAIN CONTENT
-   =========================== */
 .content {
     flex: 1;
     padding: 32px;
@@ -488,7 +594,6 @@ const totalLateMinutesThisWeek = computed(() => {
     background: var(--bg);
 }
 
-/* Page Header */
 .pageHeader {
     display: flex;
     justify-content: space-between;
@@ -527,7 +632,6 @@ const totalLateMinutesThisWeek = computed(() => {
     text-transform: capitalize;
 }
 
-/* Status Card */
 .statusCard {
     border-radius: 14px;
     padding: 20px 24px;
@@ -646,7 +750,6 @@ const totalLateMinutesThisWeek = computed(() => {
     }
 }
 
-/* KPI Row */
 .kpiRow {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
@@ -712,7 +815,6 @@ const totalLateMinutesThisWeek = computed(() => {
     color: var(--text-primary);
     line-height: 1;
     margin-bottom: 3px;
-    font-family: "Sora", sans-serif;
 }
 
 .kpiUnit {
@@ -728,7 +830,6 @@ const totalLateMinutesThisWeek = computed(() => {
     font-weight: 500;
 }
 
-/* Charts Grid */
 .chartsGrid {
     display: grid;
     grid-template-columns: 1.6fr 1.4fr;
@@ -793,9 +894,10 @@ const totalLateMinutesThisWeek = computed(() => {
 
 .chartWrap {
     width: 100%;
+    min-width: 0;
+    overflow-x: auto;
 }
 
-/* History */
 .historySection {
     display: flex;
     flex-direction: column;
@@ -931,9 +1033,6 @@ const totalLateMinutesThisWeek = computed(() => {
     }
 }
 
-/* ===========================
-   RESPONSIVE
-   =========================== */
 @media (max-width: 1200px) {
     .chartsGrid {
         grid-template-columns: 1fr;
@@ -948,34 +1047,50 @@ const totalLateMinutesThisWeek = computed(() => {
         flex-direction: column;
     }
 
+    .sidebarBackdrop {
+        display: block;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.55);
+        z-index: 40;
+    }
+
     .sidebar {
-        width: 100%;
-        height: auto;
-        position: static;
-        flex-direction: row;
-        flex-wrap: wrap;
-        gap: 8px;
-        padding: 12px;
-        border-right: none;
-        border-bottom: 1px solid var(--border);
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        width: min(280px, 85vw);
+        z-index: 50;
+        transform: translateX(-100%);
+        transition: transform 0.25s ease;
+        flex-direction: column;
+        height: 100vh;
+        padding: 20px 12px;
+        border-right: 1px solid var(--border);
+        border-bottom: none;
+
+        &.open {
+            transform: translateX(0);
+        }
 
         .sidebarTop {
-            flex-direction: row;
-            align-items: center;
-            gap: 12px;
-            flex: 1;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 28px;
         }
         .sidebarSection {
-            flex-direction: row;
-            gap: 4px;
+            flex-direction: column;
+            gap: 2px;
         }
         .sectionLabel {
-            display: none;
+            display: block;
         }
     }
 
     .content {
         padding: 20px 16px;
+        width: 100%;
     }
     .kpiRow {
         grid-template-columns: repeat(2, 1fr);
