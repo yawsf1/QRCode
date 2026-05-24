@@ -16,24 +16,22 @@ export function useRegistrationVerification({ sendRoute, registerRoute }) {
         modalError.value = "";
         showModal.value = false;
 
-        form
-            .transform((data) => {
-                const { verification_code: _code, ...payload } = data;
+        form.transform((data) => {
+            const { verification_code: _code, ...payload } = data;
 
-                return payload;
-            })
-            .post(sendRoute, {
-                preserveScroll: true,
-                onSuccess: () => {
-                    showModal.value = true;
-                },
-                onError: () => {
-                    showModal.value = false;
-                },
-                onFinish: () => {
-                    form.transform((data) => data);
-                },
-            });
+            return payload;
+        }).post(sendRoute, {
+            preserveScroll: true,
+            onSuccess: () => {
+                showModal.value = true;
+            },
+            onError: () => {
+                showModal.value = false;
+            },
+            onFinish: () => {
+                form.transform((data) => data);
+            },
+        });
     }
 
     function confirmRegistration(form) {

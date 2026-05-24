@@ -1,6 +1,7 @@
 <?php
 namespace App\Http\Controllers\Routing;
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use App\Services\AdminDashboard;
 use App\Services\EmployeDashboard;
 use App\Services\SuperAdminDashboard;
@@ -15,7 +16,12 @@ class RoutingController extends Controller
     ) {}
     public function home()
     {
-        return Inertia::render('Home');
+        $employees = User::where('role', 'employe')->count();
+        $admins = User::where('role', 'admin')->count();
+        return Inertia::render('Home', [
+            'employees' => $employees,
+            'admins' => $admins,
+        ]);
     }
     public function login()
     {
